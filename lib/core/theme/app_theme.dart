@@ -4,7 +4,11 @@ import 'package:google_fonts/google_fonts.dart';
 class AppTheme {
   static ThemeData light() {
     const seed = Color(0xFF34B3F1);
-    final textTheme = GoogleFonts.manropeTextTheme();
+    final baseTextTheme = GoogleFonts.manropeTextTheme();
+    final textTheme = baseTextTheme.apply(
+      bodyColor: const Color(0xFF17374E),
+      displayColor: const Color(0xFF17374E),
+    );
 
     return ThemeData(
       useMaterial3: true,
@@ -12,9 +16,15 @@ class AppTheme {
         seedColor: seed,
         brightness: Brightness.light,
         surface: const Color(0xFFF7FCFF),
+        onSurface: const Color(0xFF17374E),
+        onPrimaryContainer: const Color(0xFF17374E),
       ),
       textTheme: textTheme,
       scaffoldBackgroundColor: const Color(0xFFF2F9FF),
+      inputDecorationTheme: const InputDecorationTheme(
+        labelStyle: TextStyle(color: Color(0xFF355B78)),
+        hintStyle: TextStyle(color: Color(0xFF6C8EA8)),
+      ),
       cardTheme: CardThemeData(
         color: Colors.white.withValues(alpha: 0.72),
         elevation: 0,

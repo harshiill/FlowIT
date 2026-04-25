@@ -28,10 +28,15 @@ class ConnectionPrompt extends StatelessWidget {
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
           const FlowItLogo(size: 48, style: FlowItLogoStyle.icon),
+          const SizedBox(height: 10),
+          const FlowItLogo(size: 22, style: FlowItLogoStyle.text),
           const SizedBox(height: 24),
           Text(
             isConnecting ? 'Connecting to ESP32...' : 'Not Connected',
-            style: Theme.of(context).textTheme.titleLarge?.copyWith(fontWeight: FontWeight.w700),
+            style: Theme.of(context).textTheme.titleLarge?.copyWith(
+                  fontWeight: FontWeight.w700,
+                  color: const Color(0xFF12324A),
+                ),
           ),
           const SizedBox(height: 12),
           Text(
@@ -39,7 +44,9 @@ class ConnectionPrompt extends StatelessWidget {
                 ? 'Waiting for device response'
                 : 'Please configure your ESP32 connection to continue.',
             textAlign: TextAlign.center,
-            style: Theme.of(context).textTheme.bodyMedium,
+            style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                  color: const Color(0xFF355B78),
+                ),
           ),
           if (errorMessage != null && !isConnecting) ...[
             const SizedBox(height: 12),
@@ -69,7 +76,7 @@ class ConnectionPrompt extends StatelessWidget {
             'Make sure your ESP32 is powered on and running FlowIt firmware.',
             textAlign: TextAlign.center,
             style: Theme.of(context).textTheme.labelSmall?.copyWith(
-                  color: Theme.of(context).textTheme.bodySmall?.color?.withValues(alpha: 0.6),
+                  color: const Color(0xFF4A6C86),
                 ),
           ),
         ],

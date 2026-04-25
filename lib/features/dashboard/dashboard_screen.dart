@@ -6,7 +6,9 @@ import '../../core/widgets/flowit_logo.dart';
 import '../../core/widgets/frosted_card.dart';
 import '../../core/widgets/metric_tile.dart';
 import '../../core/widgets/section_header.dart';
+import '../connection/connection_screen.dart';
 import '../../state/flowit_controller.dart';
+import '../../state/flowit_state.dart';
 import 'widgets/alerts_list.dart';
 import 'widgets/heatmap_grid.dart';
 import 'widgets/mini_line_chart.dart';
@@ -20,24 +22,47 @@ class DashboardScreen extends ConsumerWidget {
     final state = ref.watch(flowitControllerProvider);
     final data = state.latestData;
 
-    // Show connection prompt if baseUrl not configured yet
+    // Show connection prompt if baseUrl not configured yet.
     if (state.baseUrl.isEmpty) {
       return Center(
         child: ConnectionPrompt(
           connectionState: state.connectionState,
           errorMessage: state.errorMessage,
           onGoToConnection: () {
-            ScaffoldMessenger.of(context).showSnackBar(
-              const SnackBar(content: Text('👉 Tap the "Connection" tab at the bottom to configure your ESP32.')),
+            Navigator.of(context).push(
+              MaterialPageRoute<void>(builder: (_) => const ConnectionScreen()),
             );
           },
         ),
       );
     }
-    if (data == null) {
-      return const SizedBox.shrink();
-    }
 
+    if (data == null) {
+      if (state.connectionState == ConnectionStateX.connected && state.errorMessage == null) {
+        return const Center(
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              CircularProgressIndicator(),
+              SizedBox(height: 12),
+              Text('Loading dashboard data...'),
+            ],
+          ),
+        );
+      }
+
+      return Center(
+        child: ConnectionPrompt(
+          connectionState: state.connectionState,
+          errorMessage: state.errorMessage,
+          onGoToConnection: () {
+            Navigator.of(context).push(
+              MaterialPageRoute<void>(builder: (_) => const ConnectionScreen()),
+            );
+          },
+        ),
+      );
+    }
 
     final lifetime = state.history.fold<double>(0, (acc, item) => acc + item.volumeLiters) + data.totalConsumed;
 

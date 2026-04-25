@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../core/widgets/frosted_card.dart';
+import '../../core/widgets/flowit_logo.dart';
 import '../../core/widgets/section_header.dart';
 import '../../state/flowit_controller.dart';
 import '../../state/flowit_state.dart';
@@ -49,6 +50,11 @@ class _ConnectionScreenState extends ConsumerState<ConnectionScreen> {
       padding: const EdgeInsets.fromLTRB(16, 16, 16, 24),
       child: Column(
         children: [
+          const Align(
+            alignment: Alignment.centerLeft,
+            child: FlowItLogo(size: 22, style: FlowItLogoStyle.text),
+          ),
+          const SizedBox(height: 12),
           FrostedCard(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,

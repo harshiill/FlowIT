@@ -68,7 +68,7 @@ class _FlowItAppState extends ConsumerState<FlowItApp> {
       scaffoldMessengerKey: _scaffoldMessengerKey,
       theme: AppTheme.light(),
       darkTheme: AppTheme.dark(),
-      themeMode: ThemeMode.system,
+      themeMode: ThemeMode.light,
       home: _FlowItHome(
         index: _index,
         onIndexChanged: (value) => setState(() => _index = value),
