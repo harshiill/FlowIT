@@ -98,8 +98,98 @@ class _ConnectionScreenState extends ConsumerState<ConnectionScreen> {
               ],
             ),
           ),
+          const SizedBox(height: 14),
+          FrostedCard(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                const SectionHeader(title: 'How to Connect'),
+                const SizedBox(height: 10),
+                _InstructionStep(
+                  number: '1',
+                  title: 'Power on your FlowIt device',
+                  description: 'Make sure the ESP32 board is turned on and running FlowIt firmware.',
+                ),
+                const SizedBox(height: 10),
+                _InstructionStep(
+                  number: '2',
+                  title: 'Join the same WiFi network',
+                  description: 'Connect your phone to the same WiFi network as the ESP32.',
+                ),
+                const SizedBox(height: 10),
+                _InstructionStep(
+                  number: '3',
+                  title: 'Find the ESP32 IP address',
+                  description: 'Check your WiFi router or ESP32 display for the device IP (usually 192.168.x.x)',
+                ),
+                const SizedBox(height: 10),
+                _InstructionStep(
+                  number: '4',
+                  title: 'Enter the URL above',
+                  description: 'Type http://[IP_ADDRESS] in the URL field and tap "Connect via WiFi"',
+                ),
+              ],
+            ),
+          ),
         ],
       ),
+    );
+  }
+}
+
+class _InstructionStep extends StatelessWidget {
+  const _InstructionStep({
+    required this.number,
+    required this.title,
+    required this.description,
+  });
+
+  final String number;
+  final String title;
+  final String description;
+
+  @override
+  Widget build(BuildContext context) {
+    return Row(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Container(
+          width: 32,
+          height: 32,
+          decoration: BoxDecoration(
+            color: Theme.of(context).colorScheme.primary.withValues(alpha: 0.18),
+            borderRadius: BorderRadius.circular(8),
+          ),
+          child: Center(
+            child: Text(
+              number,
+              style: Theme.of(context).textTheme.labelLarge?.copyWith(
+                    fontWeight: FontWeight.w700,
+                    color: Theme.of(context).colorScheme.primary,
+                  ),
+            ),
+          ),
+        ),
+        const SizedBox(width: 12),
+        Expanded(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                title,
+                style: Theme.of(context).textTheme.labelMedium?.copyWith(fontWeight: FontWeight.w600),
+              ),
+              const SizedBox(height: 4),
+              Text(
+                description,
+                style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                      color: Theme.of(context).textTheme.bodySmall?.color?.withValues(alpha: 0.75),
+                    ),
+              ),
+            ],
+          ),
+        ),
+      ],
     );
   }
 }

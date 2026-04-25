@@ -51,7 +51,9 @@ class FlowItController extends StateNotifier<FlowItState> {
       clearError: true,
     );
 
-    startPolling();
+    if ((baseUrl ?? '').isNotEmpty) {
+      startPolling();
+    }
   }
 
   void startPolling({Duration interval = const Duration(milliseconds: 350)}) {
@@ -195,7 +197,9 @@ class FlowItController extends StateNotifier<FlowItState> {
 
     state = state.copyWith(baseUrl: normalized, connectionState: ConnectionStateX.connecting, clearError: true);
     await _historyStorage.saveBaseUrl(normalized);
-    startPolling();
+    if ((baseUrl ?? '').isNotEmpty) {
+      startPolling();
+    }
   }
 
   void updateParams(FlowItParams params) {

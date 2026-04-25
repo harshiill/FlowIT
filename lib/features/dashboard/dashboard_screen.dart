@@ -1,10 +1,13 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../../core/widgets/connection_prompt.dart';
+import '../../core/widgets/flowit_logo.dart';
 import '../../core/widgets/frosted_card.dart';
 import '../../core/widgets/metric_tile.dart';
 import '../../core/widgets/section_header.dart';
 import '../../state/flowit_controller.dart';
+import '../../state/flowit_state.dart';
 import 'widgets/alerts_list.dart';
 import 'widgets/heatmap_grid.dart';
 import 'widgets/mini_line_chart.dart';
@@ -18,21 +21,24 @@ class DashboardScreen extends ConsumerWidget {
     final state = ref.watch(flowitControllerProvider);
     final data = state.latestData;
 
-    if (state.loading && data == null) {
-      return const Center(child: CircularProgressIndicator());
-    }
-
-    if (data == null) {
+    // Show connection prompt if baseUrl not configured yet
+    if (state.baseUrl.isEmpty) {
       return Center(
-        child: Padding(
-          padding: const EdgeInsets.all(24),
-          child: Text(
-            state.errorMessage ?? 'No data available. Check connection settings.',
-            textAlign: TextAlign.center,
-          ),
+        child: ConnectionPrompt(
+          connectionState: state.connectionState,
+          errorMessage: state.errorMessage,
+          onGoToConnection: () {
+            ScaffoldMessenger.of(context).showSnackBar(
+              const SnackBar(content: Text('👉 Tap the "Connection" tab at the bottom to configure your ESP32.')),
+            );
+          },
         ),
       );
     }
+    if (data == null) {
+      return const SizedBox.shrink();
+    }
+
 
     final lifetime = state.history.fold<double>(0, (acc, item) => acc + item.volumeLiters) + data.totalConsumed;
 
@@ -44,7 +50,7 @@ class DashboardScreen extends ConsumerWidget {
           SliverAppBar(
             pinned: true,
             backgroundColor: Colors.transparent,
-            title: const Text('FlowIt Dashboard'),
+            title: const FlowItLogo(size: 18, style: FlowItLogoStyle.text),
             actions: [
               Padding(
                 padding: const EdgeInsets.only(right: 14),

@@ -52,7 +52,7 @@ class FlowItParams {
 
 class FlowItState {
   const FlowItState({
-    this.loading = true,
+    this.loading = false,
     this.executingAction = false,
     this.latestData,
     this.history = const [],
@@ -61,7 +61,7 @@ class FlowItState {
     this.temperaturePoints = const [],
     this.connectionState = ConnectionStateX.disconnected,
     this.errorMessage,
-    this.baseUrl = 'http://192.168.4.1',
+    this.baseUrl = '',
     this.params = const FlowItParams(),
     this.alerts = const [],
   });
