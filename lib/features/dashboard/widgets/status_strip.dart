@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 
+import '../../../core/theme/app_theme.dart';
+import '../../../core/theme/app_constants.dart';
 import '../../../data/models/device_data.dart';
 import '../../../state/flowit_state.dart';
 
@@ -27,35 +29,162 @@ class StatusStrip extends StatelessWidget {
     };
 
     return Wrap(
-      spacing: 8,
-      runSpacing: 8,
+      spacing: AppConstants.space8,
+      runSpacing: AppConstants.space8,
       children: [
-        _Chip(label: status.label, color: status.color),
-        _Chip(label: tapOn ? 'Tap ON' : 'Tap OFF', color: tapOn ? const Color(0xFF2A9D8F) : const Color(0xFF9AA0A6)),
-        _Chip(label: aligned ? 'Aligned' : 'Misaligned', color: aligned ? const Color(0xFF0A9396) : const Color(0xFFE76F51)),
-        _Chip(label: connectionLabel, color: const Color(0xFF4D96FF)),
+        _StatusChip(label: status.label, color: status.color),
+        _StatusChip(
+          label: tapOn ? 'Tap ON' : 'Tap OFF',
+          color: tapOn ? AppTheme.success : AppTheme.textTertiary,
+          icon: tapOn ? Icons.check_circle_rounded : Icons.radio_button_unchecked,
+        ),
+        _StatusChip(
+          label: aligned ? 'Aligned' : 'Misaligned',
+          color: aligned ? AppTheme.success : AppTheme.error,
+          icon: aligned ? Icons.done_all_rounded : Icons.warning_amber_rounded,
+        ),
+        _StatusChip(
+          label: connectionLabel,
+          color: _getConnectionColor(connectionState),
+          icon: _getConnectionIcon(connectionState),
+          isAnimating: connectionState == ConnectionStateX.connecting ||
+              connectionState == ConnectionStateX.reconnecting,
+        ),
       ],
     );
   }
+
+  Color _getConnectionColor(ConnectionStateX state) {
+    return switch (state) {
+      ConnectionStateX.connected => AppTheme.success,
+      ConnectionStateX.connecting => AppTheme.info,
+      ConnectionStateX.reconnecting => AppTheme.warning,
+      ConnectionStateX.disconnected => AppTheme.error,
+    };
+  }
+
+  IconData _getConnectionIcon(ConnectionStateX state) {
+    return switch (state) {
+      ConnectionStateX.connected => Icons.wifi_rounded,
+      ConnectionStateX.connecting => Icons.sync_rounded,
+      ConnectionStateX.reconnecting => Icons.sync_problem_rounded,
+      ConnectionStateX.disconnected => Icons.wifi_off_rounded,
+    };
+  }
 }
 
-class _Chip extends StatelessWidget {
-  const _Chip({required this.label, required this.color});
+class _StatusChip extends StatefulWidget {
+  const _StatusChip({
+    required this.label,
+    required this.color,
+    this.icon,
+    this.isAnimating = false,
+  });
 
   final String label;
   final Color color;
+  final IconData? icon;
+  final bool isAnimating;
+
+  @override
+  State<_StatusChip> createState() => _StatusChipState();
+}
+
+class _StatusChipState extends State<_StatusChip>
+    with SingleTickerProviderStateMixin {
+  late AnimationController _rotationController;
+  bool _isHovered = false;
+
+  @override
+  void initState() {
+    super.initState();
+    _rotationController = AnimationController(
+      duration: AppConstants.durationVerySlow * 2,
+      vsync: this,
+    );
+
+    if (widget.isAnimating) {
+      _rotationController.repeat();
+    }
+  }
+
+  @override
+  void didUpdateWidget(_StatusChip oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (widget.isAnimating && !oldWidget.isAnimating) {
+      _rotationController.repeat();
+    } else if (!widget.isAnimating && oldWidget.isAnimating) {
+      _rotationController.stop();
+      _rotationController.reset();
+    }
+  }
+
+  @override
+  void dispose() {
+    _rotationController.dispose();
+    super.dispose();
+  }
 
   @override
   Widget build(BuildContext context) {
-    return AnimatedContainer(
-      duration: const Duration(milliseconds: 240),
-      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-      decoration: BoxDecoration(
-        color: color.withValues(alpha: 0.16),
-        borderRadius: BorderRadius.circular(999),
-        border: Border.all(color: color.withValues(alpha: 0.4)),
+    return MouseRegion(
+      onEnter: (_) => setState(() => _isHovered = true),
+      onExit: (_) => setState(() => _isHovered = false),
+      child: AnimatedContainer(
+        duration: AppConstants.durationNormal,
+        curve: AppConstants.animationCurve,
+        padding: EdgeInsets.symmetric(
+          horizontal: AppConstants.space12,
+          vertical: AppConstants.space8,
+        ),
+        decoration: BoxDecoration(
+          color: widget.color.withOpacity(AppConstants.opacitySelected),
+          borderRadius: BorderRadius.circular(AppConstants.radiusFull),
+          border: Border.all(
+            color: widget.color.withOpacity(_isHovered ? 0.6 : 0.4),
+            width: _isHovered ? 1.5 : 1.0,
+          ),
+          boxShadow: _isHovered
+              ? [
+                  BoxShadow(
+                    color: widget.color.withOpacity(0.2),
+                    blurRadius: 8,
+                    offset: const Offset(0, 2),
+                  ),
+                ]
+              : null,
+        ),
+        child: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            if (widget.icon != null) ...[
+              widget.isAnimating
+                  ? RotationTransition(
+                      turns: _rotationController,
+                      child: Icon(
+                        widget.icon,
+                        size: AppConstants.iconXs,
+                        color: widget.color,
+                      ),
+                    )
+                  : Icon(
+                      widget.icon,
+                      size: AppConstants.iconXs,
+                      color: widget.color,
+                    ),
+              SizedBox(width: AppConstants.space4),
+            ],
+            Text(
+              widget.label,
+              style: Theme.of(context).textTheme.labelLarge?.copyWith(
+                    color: widget.color,
+                    fontWeight: FontWeight.w700,
+                    letterSpacing: 0.2,
+                  ),
+            ),
+          ],
+        ),
       ),
-      child: Text(label, style: Theme.of(context).textTheme.labelLarge?.copyWith(color: color, fontWeight: FontWeight.w700)),
     );
   }
 }

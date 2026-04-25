@@ -1,11 +1,14 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../../core/theme/app_theme.dart';
+import '../../core/theme/app_constants.dart';
 import '../../core/widgets/connection_prompt.dart';
 import '../../core/widgets/flowit_logo.dart';
 import '../../core/widgets/frosted_card.dart';
 import '../../core/widgets/metric_tile.dart';
 import '../../core/widgets/section_header.dart';
+import '../../data/models/device_data.dart';
 import '../connection/connection_screen.dart';
 import '../../state/flowit_controller.dart';
 import '../../state/flowit_state.dart';
@@ -22,160 +25,354 @@ class DashboardScreen extends ConsumerWidget {
     final state = ref.watch(flowitControllerProvider);
     final data = state.latestData;
 
-    // Show connection prompt if baseUrl not configured yet.
+    // Show connection prompt if baseUrl not configured yet
     if (state.baseUrl.isEmpty) {
-      return Center(
-        child: ConnectionPrompt(
-          connectionState: state.connectionState,
-          errorMessage: state.errorMessage,
-          onGoToConnection: () {
-            Navigator.of(context).push(
-              MaterialPageRoute<void>(builder: (_) => const ConnectionScreen()),
-            );
-          },
-        ),
-      );
+      return _buildConnectionPrompt(context, state);
     }
 
+    // Show loading or error states
     if (data == null) {
-      if (state.connectionState == ConnectionStateX.connected && state.errorMessage == null) {
-        return const Center(
-          child: Column(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              CircularProgressIndicator(),
-              SizedBox(height: 12),
-              Text('Loading dashboard data...'),
-            ],
-          ),
-        );
+      if (state.connectionState == ConnectionStateX.connected &&
+          state.errorMessage == null) {
+        return _buildLoadingState();
       }
 
-      return Center(
-        child: ConnectionPrompt(
-          connectionState: state.connectionState,
-          errorMessage: state.errorMessage,
-          onGoToConnection: () {
-            Navigator.of(context).push(
-              MaterialPageRoute<void>(builder: (_) => const ConnectionScreen()),
-            );
-          },
-        ),
-      );
+      return _buildConnectionPrompt(context, state);
     }
 
-    final lifetime = state.history.fold<double>(0, (acc, item) => acc + item.volumeLiters) + data.totalConsumed;
+    final lifetime =
+        state.history.fold<double>(0, (acc, item) => acc + item.volumeLiters) +
+        data.totalConsumed;
 
-    return RefreshIndicator(
-      onRefresh: () async => ref.read(flowitControllerProvider.notifier).startPolling(),
-      child: CustomScrollView(
-        physics: const AlwaysScrollableScrollPhysics(),
-        slivers: [
-          SliverAppBar(
-            pinned: true,
-            backgroundColor: Colors.transparent,
-            title: const FlowItLogo(size: 18, style: FlowItLogoStyle.text),
-            actions: [
-              Padding(
-                padding: const EdgeInsets.only(right: 14),
-                child: Chip(
-                  label: Text('${state.baseUrl.replaceFirst('http://', '')} '),
-                  avatar: const Icon(Icons.router, size: 16),
+    return Scaffold(
+      backgroundColor: AppTheme.backgroundWhite,
+      body: RefreshIndicator(
+        onRefresh: () async =>
+            ref.read(flowitControllerProvider.notifier).startPolling(),
+        color: AppTheme.primaryBlue,
+        child: CustomScrollView(
+          physics: const AlwaysScrollableScrollPhysics(),
+          slivers: [
+            _buildAppBar(context, state),
+            SliverPadding(
+              padding: const EdgeInsets.fromLTRB(
+                AppConstants.space16,
+                AppConstants.space8,
+                AppConstants.space16,
+                AppConstants.space24,
+              ),
+              sliver: SliverList(
+                delegate: SliverChildListDelegate.fixed([
+                  _buildSystemStatusCard(data, state),
+                  const SizedBox(height: AppConstants.space16),
+                  _buildLiveMetricsCard(data, lifetime),
+                  const SizedBox(height: AppConstants.space16),
+                  _buildSmartSensorCard(context, data),
+                  const SizedBox(height: AppConstants.space16),
+                  _buildTrendsCard(state),
+                  const SizedBox(height: AppConstants.space16),
+                  _buildSmartAlertsCard(state),
+                ]),
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  /// Build modern app bar with logo and connection status
+  Widget _buildAppBar(BuildContext context, FlowItState state) {
+    return SliverAppBar(
+      pinned: true,
+      elevation: 0,
+      backgroundColor: AppTheme.backgroundWhite,
+      surfaceTintColor: AppTheme.backgroundWhite,
+      title: const FlowItLogo(size: 18, style: FlowItLogoStyle.text),
+      actions: [
+        Padding(
+          padding: const EdgeInsets.only(right: AppConstants.space16),
+          child: Container(
+            padding: const EdgeInsets.symmetric(
+              horizontal: AppConstants.space12,
+              vertical: AppConstants.space8,
+            ),
+            decoration: BoxDecoration(
+              color: AppTheme.surfaceBlue,
+              borderRadius: BorderRadius.circular(AppConstants.radiusFull),
+              border: Border.all(
+                color: AppTheme.primaryBlue.withOpacity(0.2),
+                width: 1,
+              ),
+            ),
+            child: Row(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Icon(
+                  Icons.router_rounded,
+                  size: AppConstants.iconSm,
+                  color: AppTheme.primaryBlue,
                 ),
+                const SizedBox(width: AppConstants.space8),
+                Text(
+                  state.baseUrl.replaceFirst('http://', ''),
+                  style: const TextStyle(
+                    color: AppTheme.primaryBlue,
+                    fontSize: 13,
+                    fontWeight: FontWeight.w600,
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ),
+      ],
+    );
+  }
+
+  /// Build system status card
+  Widget _buildSystemStatusCard(DeviceData data, FlowItState state) {
+    return FrostedCard(
+      elevation: CardElevation.medium,
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          const SectionHeader(
+            title: 'System Status',
+            size: SectionHeaderSize.medium,
+          ),
+          const SizedBox(height: AppConstants.space12),
+          StatusStrip(
+            status: data.status,
+            tapOn: data.tapOn,
+            connectionState: state.connectionState,
+            aligned: data.aligned,
+          ),
+        ],
+      ),
+    );
+  }
+
+  /// Build live metrics card with grid of metric tiles
+  Widget _buildLiveMetricsCard(DeviceData data, double lifetime) {
+    return FrostedCard(
+      elevation: CardElevation.medium,
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          const SectionHeader(
+            title: 'Live Metrics',
+            size: SectionHeaderSize.medium,
+          ),
+          const SizedBox(height: AppConstants.space16),
+          GridView.count(
+            crossAxisCount: AppConstants.gridColumns2,
+            childAspectRatio: AppConstants.metricTileAspectRatio,
+            mainAxisSpacing: AppConstants.space12,
+            crossAxisSpacing: AppConstants.space12,
+            physics: const NeverScrollableScrollPhysics(),
+            shrinkWrap: true,
+            children: [
+              MetricTile(
+                label: 'Flow Rate',
+                value: data.flowRate.toStringAsFixed(2),
+                unit: 'L/min',
+                icon: Icons.water_drop_outlined,
+                size: MetricTileSize.medium,
+              ),
+              MetricTile(
+                label: 'Session Usage',
+                value: data.volume.toStringAsFixed(0),
+                unit: 'mL',
+                icon: Icons.local_drink_outlined,
+                size: MetricTileSize.medium,
+              ),
+              MetricTile(
+                label: 'Total Consumed',
+                value: lifetime.toStringAsFixed(2),
+                unit: 'L',
+                icon: Icons.monitor_heart_outlined,
+                size: MetricTileSize.medium,
+              ),
+              MetricTile(
+                label: 'Temperature',
+                value: data.temperature.toStringAsFixed(1),
+                unit: '°C',
+                icon: Icons.thermostat_outlined,
+                size: MetricTileSize.medium,
               ),
             ],
           ),
-          SliverPadding(
-            padding: const EdgeInsets.fromLTRB(16, 8, 16, 24),
-            sliver: SliverList(
-              delegate: SliverChildListDelegate.fixed([
-                FrostedCard(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      const SectionHeader(title: 'System Status'),
-                      const SizedBox(height: 10),
-                      StatusStrip(
-                        status: data.status,
-                        tapOn: data.tapOn,
-                        connectionState: state.connectionState,
-                        aligned: data.aligned,
-                      ),
-                    ],
-                  ),
+        ],
+      ),
+    );
+  }
+
+  /// Build smart sensor heatmap card
+  Widget _buildSmartSensorCard(BuildContext context, DeviceData data) {
+    return FrostedCard(
+      elevation: CardElevation.medium,
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          SectionHeader(
+            title: 'Smart Sensor 8×8',
+            size: SectionHeaderSize.medium,
+            trailing: Container(
+              padding: const EdgeInsets.symmetric(
+                horizontal: AppConstants.space12,
+                vertical: AppConstants.space8,
+              ),
+              decoration: BoxDecoration(
+                color: AppTheme.surfaceBlue,
+                borderRadius: BorderRadius.circular(AppConstants.radiusFull),
+                border: Border.all(
+                  color: AppTheme.primaryBlue.withOpacity(0.2),
+                  width: 1,
                 ),
-                const SizedBox(height: 14),
-                FrostedCard(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      const SectionHeader(title: 'Live Metrics'),
-                      const SizedBox(height: 12),
-                      GridView.count(
-                        crossAxisCount: 2,
-                        childAspectRatio: 2.25,
-                        mainAxisSpacing: 10,
-                        crossAxisSpacing: 10,
-                        physics: const NeverScrollableScrollPhysics(),
-                        shrinkWrap: true,
-                        children: [
-                          MetricTile(label: 'Flow Rate', value: data.flowRate.toStringAsFixed(2), unit: 'L/min', icon: Icons.water_drop_outlined),
-                          MetricTile(label: 'Session Usage', value: data.volume.toStringAsFixed(0), unit: 'mL', icon: Icons.local_drink_outlined),
-                          MetricTile(label: 'Total Consumed', value: lifetime.toStringAsFixed(2), unit: 'L', icon: Icons.monitor_heart_outlined),
-                          MetricTile(label: 'Temperature', value: data.temperature.toStringAsFixed(1), unit: '°C', icon: Icons.thermostat_outlined),
-                        ],
-                      ),
-                    ],
+              ),
+              child: Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Icon(
+                    Icons.my_location_rounded,
+                    size: AppConstants.iconXs,
+                    color: AppTheme.primaryBlue,
                   ),
-                ),
-                const SizedBox(height: 14),
-                FrostedCard(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      SectionHeader(
-                        title: 'Smart Sensor 8×8',
-                        trailing: Text(
-                          'Centroid (${data.centroidRow}, ${data.centroidCol})',
-                          style: Theme.of(context).textTheme.bodySmall,
-                        ),
-                      ),
-                      const SizedBox(height: 10),
-                      HeatmapGrid(
-                        grid: data.grid,
-                        cluster: data.cluster,
-                        rimActive: data.rimActive,
-                        centroidRow: data.centroidRow,
-                        centroidCol: data.centroidCol,
-                      ),
-                    ],
+                  const SizedBox(width: AppConstants.space4),
+                  Text(
+                    'Centroid (${data.centroidRow}, ${data.centroidCol})',
+                    style: Theme.of(context).textTheme.bodySmall!.copyWith(
+                      color: AppTheme.primaryBlue,
+                      fontWeight: FontWeight.w600,
+                    ),
                   ),
-                ),
-                const SizedBox(height: 14),
-                FrostedCard(
-                  child: Column(
-                    children: [
-                      MiniLineChart(points: state.flowPoints, color: const Color(0xFF00A8E8), title: 'Flow Rate Trend'),
-                      const SizedBox(height: 10),
-                      MiniLineChart(points: state.usagePoints, color: const Color(0xFF2A9D8F), title: 'Water Usage Trend'),
-                    ],
-                  ),
-                ),
-                const SizedBox(height: 14),
-                FrostedCard(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      const SectionHeader(title: 'Smart Alerts'),
-                      const SizedBox(height: 10),
-                      AlertsList(alerts: state.alerts),
-                    ],
-                  ),
-                ),
-              ]),
+                ],
+              ),
             ),
           ),
+          const SizedBox(height: AppConstants.space16),
+          HeatmapGrid(
+            grid: data.grid,
+            cluster: data.cluster,
+            rimActive: data.rimActive,
+            centroidRow: data.centroidRow,
+            centroidCol: data.centroidCol,
+          ),
         ],
+      ),
+    );
+  }
+
+  /// Build trends card with line charts
+  Widget _buildTrendsCard(FlowItState state) {
+    return FrostedCard(
+      elevation: CardElevation.medium,
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          const SectionHeader(title: 'Trends', size: SectionHeaderSize.medium),
+          const SizedBox(height: AppConstants.space16),
+          MiniLineChart(
+            points: state.flowPoints,
+            color: AppTheme.primaryBlue,
+            title: 'Flow Rate Trend',
+          ),
+          const SizedBox(height: AppConstants.space16),
+          MiniLineChart(
+            points: state.usagePoints,
+            color: AppTheme.success,
+            title: 'Water Usage Trend',
+          ),
+        ],
+      ),
+    );
+  }
+
+  /// Build smart alerts card
+  Widget _buildSmartAlertsCard(FlowItState state) {
+    return FrostedCard(
+      elevation: CardElevation.medium,
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          SectionHeaderWithBadge(
+            title: 'Smart Alerts',
+            count: state.alerts.length,
+            size: SectionHeaderSize.medium,
+            badgeColor: state.alerts.isEmpty
+                ? AppTheme.textTertiary
+                : AppTheme.warning,
+          ),
+          const SizedBox(height: AppConstants.space12),
+          AlertsList(alerts: state.alerts),
+        ],
+      ),
+    );
+  }
+
+  /// Build modern loading state
+  Widget _buildLoadingState() {
+    return Scaffold(
+      backgroundColor: AppTheme.backgroundWhite,
+      body: Center(
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Container(
+              padding: const EdgeInsets.all(AppConstants.space24),
+              decoration: BoxDecoration(
+                color: AppTheme.surfaceBlue,
+                borderRadius: BorderRadius.circular(AppConstants.radiusXl),
+                boxShadow: AppTheme.shadowMd,
+              ),
+              child: const CircularProgressIndicator(
+                valueColor: AlwaysStoppedAnimation<Color>(AppTheme.primaryBlue),
+                strokeWidth: 3,
+              ),
+            ),
+            const SizedBox(height: AppConstants.space24),
+            Text(
+              'Loading dashboard data...',
+              style: const TextStyle(
+                color: AppTheme.textSecondary,
+                fontSize: 16,
+                fontWeight: FontWeight.w500,
+              ),
+            ),
+            const SizedBox(height: AppConstants.space8),
+            Text(
+              'Please wait while we fetch the latest metrics',
+              style: const TextStyle(
+                color: AppTheme.textTertiary,
+                fontSize: 14,
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  /// Build connection prompt with modern design
+  Widget _buildConnectionPrompt(BuildContext context, FlowItState state) {
+    return Scaffold(
+      backgroundColor: AppTheme.backgroundWhite,
+      body: Center(
+        child: Padding(
+          padding: const EdgeInsets.all(AppConstants.space24),
+          child: ConnectionPrompt(
+            connectionState: state.connectionState,
+            errorMessage: state.errorMessage,
+            onGoToConnection: () {
+              Navigator.of(context).push(
+                MaterialPageRoute<void>(
+                  builder: (_) => const ConnectionScreen(),
+                ),
+              );
+            },
+          ),
+        ),
       ),
     );
   }
