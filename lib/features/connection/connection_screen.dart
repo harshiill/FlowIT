@@ -36,148 +36,169 @@ class _ConnectionScreenState extends ConsumerState<ConnectionScreen> {
 
     final connectionStatus = _getConnectionStatus(state.connectionState);
 
-    return SingleChildScrollView(
-      padding: const EdgeInsets.fromLTRB(
-        AppConstants.space16,
-        AppConstants.space16,
-        AppConstants.space16,
-        AppConstants.space24,
+    return Scaffold(
+      backgroundColor: AppTheme.backgroundWhite,
+      appBar: AppBar(
+        title: const Text('Connection Settings'),
+        centerTitle: false,
       ),
-      child: Column(
-        children: [
-          // Logo
-          const Align(
-            alignment: Alignment.centerLeft,
-            child: FlowItLogo(size: 22, style: FlowItLogoStyle.text),
-          ),
-          const SizedBox(height: AppConstants.space16),
+      body: SingleChildScrollView(
+        padding: const EdgeInsets.fromLTRB(
+          AppConstants.space16,
+          AppConstants.space16,
+          AppConstants.space16,
+          AppConstants.space24,
+        ),
+        child: Column(
+          children: [
+            // Logo
+            const Align(
+              alignment: Alignment.centerLeft,
+              child: FlowItLogo(size: 22, style: FlowItLogoStyle.text),
+            ),
+            const SizedBox(height: AppConstants.space16),
 
-          // Connection Card
-          FrostedCard(
-            elevation: CardElevation.medium,
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                const SectionHeader(
-                  title: 'Device Connection',
-                  size: SectionHeaderSize.medium,
-                ),
-                const SizedBox(height: AppConstants.space16),
-
-                // Connection Status Indicator
-                _ConnectionStatusIndicator(
-                  label: connectionStatus.label,
-                  color: connectionStatus.color,
-                  icon: connectionStatus.icon,
-                ),
-                const SizedBox(height: AppConstants.space20),
-
-                // URL Input Field
-                _StyledTextField(
-                  controller: _controller,
-                  labelText: 'ESP32 Base URL',
-                  hintText: 'http://192.168.4.1',
-                  prefixIcon: Icons.link_rounded,
-                ),
-                const SizedBox(height: AppConstants.space16),
-
-                // Connection Buttons
-                Wrap(
-                  spacing: AppConstants.space12,
-                  runSpacing: AppConstants.space12,
-                  children: [
-                    FilledButton.icon(
-                      onPressed: () => notifier.setBaseUrl(_controller.text),
-                      icon: const Icon(Icons.wifi_rounded, size: AppConstants.iconSm),
-                      label: const Text('Connect via WiFi'),
-                      style: FilledButton.styleFrom(
-                        backgroundColor: AppTheme.primaryBlue,
-                        foregroundColor: AppTheme.textOnPrimary,
-                        padding: const EdgeInsets.symmetric(
-                          horizontal: AppConstants.space20,
-                          vertical: AppConstants.space12,
-                        ),
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(AppConstants.radiusMd),
-                        ),
-                      ),
-                    ),
-                    OutlinedButton.icon(
-                      onPressed: null,
-                      icon: const Icon(Icons.bluetooth_rounded, size: AppConstants.iconSm),
-                      label: const Text('Bluetooth (Soon)'),
-                      style: OutlinedButton.styleFrom(
-                        padding: const EdgeInsets.symmetric(
-                          horizontal: AppConstants.space20,
-                          vertical: AppConstants.space12,
-                        ),
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(AppConstants.radiusMd),
-                        ),
-                      ),
-                    ),
-                  ],
-                ),
-
-                // Error Message
-                if (state.errorMessage != null) ...[
+            // Connection Card
+            FrostedCard(
+              elevation: CardElevation.medium,
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  const SectionHeader(
+                    title: 'Device Connection',
+                    size: SectionHeaderSize.medium,
+                  ),
                   const SizedBox(height: AppConstants.space16),
-                  _ErrorMessage(message: state.errorMessage!),
+
+                  // Connection Status Indicator
+                  _ConnectionStatusIndicator(
+                    label: connectionStatus.label,
+                    color: connectionStatus.color,
+                    icon: connectionStatus.icon,
+                  ),
+                  const SizedBox(height: AppConstants.space20),
+
+                  // URL Input Field
+                  _StyledTextField(
+                    controller: _controller,
+                    labelText: 'ESP32 Base URL',
+                    hintText: 'http://192.168.4.1',
+                    prefixIcon: Icons.link_rounded,
+                  ),
+                  const SizedBox(height: AppConstants.space16),
+
+                  // Connection Buttons
+                  Wrap(
+                    spacing: AppConstants.space12,
+                    runSpacing: AppConstants.space12,
+                    children: [
+                      FilledButton.icon(
+                        onPressed: () => notifier.setBaseUrl(_controller.text),
+                        icon: const Icon(
+                          Icons.wifi_rounded,
+                          size: AppConstants.iconSm,
+                        ),
+                        label: const Text('Connect via WiFi'),
+                        style: FilledButton.styleFrom(
+                          backgroundColor: AppTheme.primaryBlue,
+                          foregroundColor: AppTheme.textOnPrimary,
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: AppConstants.space20,
+                            vertical: AppConstants.space12,
+                          ),
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(
+                              AppConstants.radiusMd,
+                            ),
+                          ),
+                        ),
+                      ),
+                      OutlinedButton.icon(
+                        onPressed: null,
+                        icon: const Icon(
+                          Icons.bluetooth_rounded,
+                          size: AppConstants.iconSm,
+                        ),
+                        label: const Text('Bluetooth (Soon)'),
+                        style: OutlinedButton.styleFrom(
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: AppConstants.space20,
+                            vertical: AppConstants.space12,
+                          ),
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(
+                              AppConstants.radiusMd,
+                            ),
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+
+                  // Error Message
+                  if (state.errorMessage != null) ...[
+                    const SizedBox(height: AppConstants.space16),
+                    _ErrorMessage(message: state.errorMessage!),
+                  ],
                 ],
-              ],
+              ),
             ),
-          ),
-          const SizedBox(height: AppConstants.space16),
+            const SizedBox(height: AppConstants.space16),
 
-          // Instructions Card
-          FrostedCard(
-            elevation: CardElevation.low,
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                SectionHeaderWithIcon(
-                  title: 'How to Connect',
-                  icon: Icons.help_outline_rounded,
-                  iconColor: AppTheme.info,
-                  iconBackgroundColor: AppTheme.infoLight,
-                  size: SectionHeaderSize.medium,
-                ),
-                const SizedBox(height: AppConstants.space16),
+            // Instructions Card
+            FrostedCard(
+              elevation: CardElevation.low,
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  SectionHeaderWithIcon(
+                    title: 'How to Connect',
+                    icon: Icons.help_outline_rounded,
+                    iconColor: AppTheme.info,
+                    iconBackgroundColor: AppTheme.infoLight,
+                    size: SectionHeaderSize.medium,
+                  ),
+                  const SizedBox(height: AppConstants.space16),
 
-                _InstructionStep(
-                  number: 1,
-                  title: 'Power on your FlowIt device',
-                  description: 'Make sure the ESP32 board is turned on and running FlowIt firmware.',
-                  icon: Icons.power_settings_new_rounded,
-                ),
-                const SizedBox(height: AppConstants.space12),
+                  _InstructionStep(
+                    number: 1,
+                    title: 'Power on your FlowIt device',
+                    description:
+                        'Make sure the ESP32 board is turned on and running FlowIt firmware.',
+                    icon: Icons.power_settings_new_rounded,
+                  ),
+                  const SizedBox(height: AppConstants.space12),
 
-                _InstructionStep(
-                  number: 2,
-                  title: 'Join the same WiFi network',
-                  description: 'Connect your phone to the same WiFi network as the ESP32.',
-                  icon: Icons.wifi_rounded,
-                ),
-                const SizedBox(height: AppConstants.space12),
+                  _InstructionStep(
+                    number: 2,
+                    title: 'Join the same WiFi network',
+                    description:
+                        'Connect your phone to the same WiFi network as the ESP32.',
+                    icon: Icons.wifi_rounded,
+                  ),
+                  const SizedBox(height: AppConstants.space12),
 
-                _InstructionStep(
-                  number: 3,
-                  title: 'Find the ESP32 IP address',
-                  description: 'Check your WiFi router or ESP32 display for the device IP (usually 192.168.x.x)',
-                  icon: Icons.router_rounded,
-                ),
-                const SizedBox(height: AppConstants.space12),
+                  _InstructionStep(
+                    number: 3,
+                    title: 'Find the ESP32 IP address',
+                    description:
+                        'Check your WiFi router or ESP32 display for the device IP (usually 192.168.x.x)',
+                    icon: Icons.router_rounded,
+                  ),
+                  const SizedBox(height: AppConstants.space12),
 
-                _InstructionStep(
-                  number: 4,
-                  title: 'Enter the URL above',
-                  description: 'Type http://[IP_ADDRESS] in the URL field and tap "Connect via WiFi"',
-                  icon: Icons.touch_app_rounded,
-                ),
-              ],
+                  _InstructionStep(
+                    number: 4,
+                    title: 'Enter the URL above',
+                    description:
+                        'Type http://[IP_ADDRESS] in the URL field and tap "Connect via WiFi"',
+                    icon: Icons.touch_app_rounded,
+                  ),
+                ],
+              ),
             ),
-          ),
-        ],
+          ],
+        ),
       ),
     );
   }
@@ -238,10 +259,7 @@ class _ConnectionStatusIndicator extends StatelessWidget {
       decoration: BoxDecoration(
         color: color.withOpacity(0.08),
         borderRadius: BorderRadius.circular(AppConstants.radiusMd),
-        border: Border.all(
-          color: color.withOpacity(0.2),
-          width: 1.5,
-        ),
+        border: Border.all(color: color.withOpacity(0.2), width: 1.5),
       ),
       child: Row(
         mainAxisSize: MainAxisSize.min,
@@ -280,10 +298,7 @@ class _StyledTextField extends StatelessWidget {
     return TextField(
       controller: controller,
       keyboardType: TextInputType.url,
-      style: const TextStyle(
-        fontSize: 15,
-        fontWeight: FontWeight.w500,
-      ),
+      style: const TextStyle(fontSize: 15, fontWeight: FontWeight.w500),
       decoration: InputDecoration(
         labelText: labelText,
         hintText: hintText,
@@ -326,10 +341,7 @@ class _ErrorMessage extends StatelessWidget {
       decoration: BoxDecoration(
         color: AppTheme.errorLight,
         borderRadius: BorderRadius.circular(AppConstants.radiusSm),
-        border: Border.all(
-          color: AppTheme.error.withOpacity(0.3),
-          width: 1,
-        ),
+        border: Border.all(color: AppTheme.error.withOpacity(0.3), width: 1),
       ),
       child: Row(
         children: [
@@ -377,10 +389,7 @@ class _InstructionStep extends StatelessWidget {
       decoration: BoxDecoration(
         color: AppTheme.surfaceBlue,
         borderRadius: BorderRadius.circular(AppConstants.radiusMd),
-        border: Border.all(
-          color: AppTheme.accentBluePale,
-          width: 1,
-        ),
+        border: Border.all(color: AppTheme.accentBluePale, width: 1),
       ),
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -391,10 +400,7 @@ class _InstructionStep extends StatelessWidget {
             height: 36,
             decoration: BoxDecoration(
               gradient: LinearGradient(
-                colors: [
-                  AppTheme.primaryBlue,
-                  AppTheme.primaryBlueLight,
-                ],
+                colors: [AppTheme.primaryBlue, AppTheme.primaryBlueLight],
                 begin: Alignment.topLeft,
                 end: Alignment.bottomRight,
               ),

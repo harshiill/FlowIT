@@ -356,24 +356,14 @@ class DashboardScreen extends ConsumerWidget {
 
   /// Build connection prompt with modern design
   Widget _buildConnectionPrompt(BuildContext context, FlowItState state) {
-    return Scaffold(
-      backgroundColor: AppTheme.backgroundWhite,
-      body: Center(
-        child: Padding(
-          padding: const EdgeInsets.all(AppConstants.space24),
-          child: ConnectionPrompt(
-            connectionState: state.connectionState,
-            errorMessage: state.errorMessage,
-            onGoToConnection: () {
-              Navigator.of(context).push(
-                MaterialPageRoute<void>(
-                  builder: (_) => const ConnectionScreen(),
-                ),
-              );
-            },
-          ),
-        ),
-      ),
+    return ConnectionPrompt(
+      connectionState: state.connectionState,
+      errorMessage: state.errorMessage,
+      onGoToConnection: () {
+        Navigator.of(context).push(
+          MaterialPageRoute<void>(builder: (_) => const ConnectionScreen()),
+        );
+      },
     );
   }
 }
