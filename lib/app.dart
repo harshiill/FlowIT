@@ -31,6 +31,7 @@ class _FlowItAppState extends ConsumerState<FlowItApp> {
         if (next == _lastError) return;
         _lastError = next;
         if (!mounted) return;
+
         try {
           _scaffoldMessengerKey.currentState?.removeCurrentSnackBar();
           _scaffoldMessengerKey.currentState?.showSnackBar(
@@ -40,7 +41,7 @@ class _FlowItAppState extends ConsumerState<FlowItApp> {
             ),
           );
         } catch (_) {
-          // Ignore if ScaffoldMessenger not ready
+          // Ignore if ScaffoldMessenger isn't fully ready yet.
         }
       },
     );
@@ -78,15 +79,15 @@ class _FlowItAppState extends ConsumerState<FlowItApp> {
 }
 
 class _FlowItHome extends StatelessWidget {
-  final int index;
-  final ValueChanged<int> onIndexChanged;
-  final List<Widget> pages;
-
   const _FlowItHome({
     required this.index,
     required this.onIndexChanged,
     required this.pages,
   });
+
+  final int index;
+  final ValueChanged<int> onIndexChanged;
+  final List<Widget> pages;
 
   @override
   Widget build(BuildContext context) {
@@ -107,10 +108,26 @@ class _FlowItHome extends StatelessWidget {
         selectedIndex: index,
         onDestinationSelected: onIndexChanged,
         destinations: const [
-          NavigationDestination(icon: Icon(Icons.dashboard_outlined), selectedIcon: Icon(Icons.dashboard), label: 'Dashboard'),
-          NavigationDestination(icon: Icon(Icons.tune_outlined), selectedIcon: Icon(Icons.tune), label: 'Controls'),
-          NavigationDestination(icon: Icon(Icons.query_stats_outlined), selectedIcon: Icon(Icons.query_stats), label: 'Analytics'),
-          NavigationDestination(icon: Icon(Icons.wifi_tethering_outlined), selectedIcon: Icon(Icons.wifi_tethering), label: 'Connection'),
+          NavigationDestination(
+            icon: Icon(Icons.dashboard_outlined),
+            selectedIcon: Icon(Icons.dashboard),
+            label: 'Dashboard',
+          ),
+          NavigationDestination(
+            icon: Icon(Icons.tune_outlined),
+            selectedIcon: Icon(Icons.tune),
+            label: 'Controls',
+          ),
+          NavigationDestination(
+            icon: Icon(Icons.query_stats_outlined),
+            selectedIcon: Icon(Icons.query_stats),
+            label: 'Analytics',
+          ),
+          NavigationDestination(
+            icon: Icon(Icons.wifi_tethering_outlined),
+            selectedIcon: Icon(Icons.wifi_tethering),
+            label: 'Connection',
+          ),
         ],
       ),
     );

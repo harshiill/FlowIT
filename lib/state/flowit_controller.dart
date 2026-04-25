@@ -43,15 +43,16 @@ class FlowItController extends StateNotifier<FlowItState> {
     final baseUrl = await _historyStorage.loadBaseUrl();
     final history = await _historyStorage.loadHistory();
 
+    final hasBaseUrl = (baseUrl ?? '').isNotEmpty;
     state = state.copyWith(
-      loading: true,
+      loading: hasBaseUrl,
       baseUrl: baseUrl ?? state.baseUrl,
       history: history,
-      connectionState: ConnectionStateX.connecting,
+      connectionState: hasBaseUrl ? ConnectionStateX.connecting : ConnectionStateX.disconnected,
       clearError: true,
     );
 
-    if ((baseUrl ?? '').isNotEmpty) {
+    if (hasBaseUrl) {
       startPolling();
     }
   }
@@ -90,7 +91,7 @@ class FlowItController extends StateNotifier<FlowItState> {
       state = state.copyWith(
         loading: false,
         connectionState: _failureCount >= 5 ? ConnectionStateX.disconnected : ConnectionStateX.reconnecting,
-        errorMessage: 'Connection error: $error',
+        errorMessage: 'Connection error: Unable to reach device. Check ESP32 IP and WiFi.',
       );
     }
   }
@@ -197,9 +198,7 @@ class FlowItController extends StateNotifier<FlowItState> {
 
     state = state.copyWith(baseUrl: normalized, connectionState: ConnectionStateX.connecting, clearError: true);
     await _historyStorage.saveBaseUrl(normalized);
-    if ((baseUrl ?? '').isNotEmpty) {
-      startPolling();
-    }
+    startPolling();
   }
 
   void updateParams(FlowItParams params) {
