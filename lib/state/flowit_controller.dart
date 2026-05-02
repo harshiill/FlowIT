@@ -65,7 +65,13 @@ class FlowItController extends StateNotifier<FlowItState> {
 
   Future<void> _pollOnce() async {
     try {
-      final data = await _api.fetchData(state.baseUrl);
+      var data = await _api.fetchData(state.baseUrl);
+      if (state.devOverrideStatus != null) {
+        data = data.copyWith(
+          status: state.devOverrideStatus,
+          tapOn: state.devOverrideStatus == DeviceStatus.filling,
+        );
+      }
       _failureCount = 0;
 
       _handleSession(data);
@@ -231,6 +237,17 @@ class FlowItController extends StateNotifier<FlowItState> {
 
   Future<void> stopFlow() async {
     await _performAction(() => _api.stopDispense(state.baseUrl));
+  }
+
+  Future<void> setDevOverride(DeviceStatus? status) async {
+    state = state.copyWith(devOverrideStatus: status, clearDevOverride: status == null);
+    if (status == DeviceStatus.filling) {
+      await startFlow();
+    } else if (status == DeviceStatus.noContainer || status == DeviceStatus.full) {
+      await stopFlow();
+    } else {
+      unawaited(_pollOnce());
+    }
   }
 
   Future<void> _performAction(Future<void> Function() action) async {

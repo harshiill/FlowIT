@@ -88,7 +88,7 @@ class DashboardScreen extends ConsumerWidget {
       elevation: 0,
       backgroundColor: AppTheme.backgroundWhite,
       surfaceTintColor: AppTheme.backgroundWhite,
-      title: const FlowItLogo(size: 18, style: FlowItLogoStyle.text),
+      title: const _SecretDevLogo(),
       actions: [
         Padding(
           padding: const EdgeInsets.only(right: AppConstants.space16),
@@ -364,6 +364,154 @@ class DashboardScreen extends ConsumerWidget {
           MaterialPageRoute<void>(builder: (_) => const ConnectionScreen()),
         );
       },
+    );
+  }
+}
+
+/// Secret Developer Logo with tap counter
+class _SecretDevLogo extends ConsumerStatefulWidget {
+  const _SecretDevLogo();
+
+  @override
+  ConsumerState<_SecretDevLogo> createState() => _SecretDevLogoState();
+}
+
+class _SecretDevLogoState extends ConsumerState<_SecretDevLogo> {
+  int _taps = 0;
+  DateTime? _lastTap;
+
+  void _handleTap() {
+    final now = DateTime.now();
+    if (_lastTap == null || now.difference(_lastTap!) > const Duration(milliseconds: 500)) {
+      _taps = 1;
+    } else {
+      _taps++;
+    }
+    _lastTap = now;
+
+    if (_taps >= 5) {
+      _taps = 0;
+      _showDevMenu();
+    }
+  }
+
+  void _showDevMenu() {
+    showModalBottomSheet(
+      context: context,
+      backgroundColor: AppTheme.backgroundWhite,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(AppConstants.radiusXl)),
+      ),
+      builder: (context) {
+        return SafeArea(
+          child: Padding(
+            padding: const EdgeInsets.all(AppConstants.space24),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: [
+                Row(
+                  children: [
+                    const Icon(Icons.developer_mode, color: AppTheme.primaryBlue),
+                    const SizedBox(width: AppConstants.space12),
+                    Text(
+                      'Developer Options',
+                      style: Theme.of(context).textTheme.titleLarge?.copyWith(
+                        color: AppTheme.textPrimary,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: AppConstants.space24),
+                _buildDevButton(
+                  'Force NO CONTAINER',
+                  DeviceStatus.noContainer.color,
+                  () => _setOverride(DeviceStatus.noContainer),
+                ),
+                const SizedBox(height: AppConstants.space12),
+                _buildDevButton(
+                  'Force FILLING',
+                  DeviceStatus.filling.color,
+                  () => _setOverride(DeviceStatus.filling),
+                ),
+                const SizedBox(height: AppConstants.space12),
+                _buildDevButton(
+                  'Force FULL',
+                  DeviceStatus.full.color,
+                  () => _setOverride(DeviceStatus.full),
+                ),
+                const SizedBox(height: AppConstants.space24),
+                OutlinedButton(
+                  onPressed: () => _setOverride(null),
+                  style: OutlinedButton.styleFrom(
+                    padding: const EdgeInsets.symmetric(vertical: AppConstants.space16),
+                    side: const BorderSide(color: AppTheme.borderMedium),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(AppConstants.radiusMd),
+                    ),
+                  ),
+                  child: const Text('Clear Override', style: TextStyle(color: AppTheme.textSecondary)),
+                ),
+              ],
+            ),
+          ),
+        );
+      },
+    );
+  }
+
+  void _setOverride(DeviceStatus? status) {
+    ref.read(flowitControllerProvider.notifier).setDevOverride(status);
+    Navigator.of(context).pop();
+  }
+
+  Widget _buildDevButton(String label, Color color, VoidCallback onTap) {
+    return FilledButton(
+      onPressed: onTap,
+      style: FilledButton.styleFrom(
+        backgroundColor: color,
+        padding: const EdgeInsets.symmetric(vertical: AppConstants.space16),
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(AppConstants.radiusMd),
+        ),
+      ),
+      child: Text(label, style: const TextStyle(fontWeight: FontWeight.bold)),
+    );
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final state = ref.watch(flowitControllerProvider);
+    final isOverridden = state.devOverrideStatus != null;
+    
+    return GestureDetector(
+      onTap: _handleTap,
+      behavior: HitTestBehavior.opaque,
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          const FlowItLogo(size: 18, style: FlowItLogoStyle.text),
+          if (isOverridden) ...[
+            const SizedBox(width: AppConstants.space8),
+            Container(
+              padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+              decoration: BoxDecoration(
+                color: AppTheme.warning.withOpacity(0.2),
+                borderRadius: BorderRadius.circular(4),
+              ),
+              child: const Text(
+                'DEV',
+                style: TextStyle(
+                  fontSize: 10,
+                  fontWeight: FontWeight.bold,
+                  color: AppTheme.warning,
+                ),
+              ),
+            ),
+          ],
+        ],
+      ),
     );
   }
 }

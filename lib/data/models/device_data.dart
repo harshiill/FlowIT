@@ -83,6 +83,40 @@ class DeviceData {
   final double totalConsumed;
   final DateTime updatedAt;
 
+  DeviceData copyWith({
+    List<double>? grid,
+    List<bool>? cluster,
+    List<bool>? rimActive,
+    int? centroidRow,
+    int? centroidCol,
+    bool? centerLocal,
+    double? flowRate,
+    double? volume,
+    double? temperature,
+    DeviceStatus? status,
+    bool? isManual,
+    bool? tapOn,
+    double? totalConsumed,
+    DateTime? updatedAt,
+  }) {
+    return DeviceData(
+      grid: grid ?? this.grid,
+      cluster: cluster ?? this.cluster,
+      rimActive: rimActive ?? this.rimActive,
+      centroidRow: centroidRow ?? this.centroidRow,
+      centroidCol: centroidCol ?? this.centroidCol,
+      centerLocal: centerLocal ?? this.centerLocal,
+      flowRate: flowRate ?? this.flowRate,
+      volume: volume ?? this.volume,
+      temperature: temperature ?? this.temperature,
+      status: status ?? this.status,
+      isManual: isManual ?? this.isManual,
+      tapOn: tapOn ?? this.tapOn,
+      totalConsumed: totalConsumed ?? this.totalConsumed,
+      updatedAt: updatedAt ?? this.updatedAt,
+    );
+  }
+
   bool get aligned => centerLocal;
 
   factory DeviceData.fromJson(Map<String, dynamic> json) {

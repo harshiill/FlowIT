@@ -64,6 +64,7 @@ class FlowItState {
     this.baseUrl = '',
     this.params = const FlowItParams(),
     this.alerts = const [],
+    this.devOverrideStatus,
   });
 
   final bool loading;
@@ -78,6 +79,7 @@ class FlowItState {
   final String baseUrl;
   final FlowItParams params;
   final List<AlertEvent> alerts;
+  final DeviceStatus? devOverrideStatus;
 
   FlowItState copyWith({
     bool? loading,
@@ -92,7 +94,9 @@ class FlowItState {
     String? baseUrl,
     FlowItParams? params,
     List<AlertEvent>? alerts,
+    DeviceStatus? devOverrideStatus,
     bool clearError = false,
+    bool clearDevOverride = false,
   }) {
     return FlowItState(
       loading: loading ?? this.loading,
@@ -107,6 +111,7 @@ class FlowItState {
       baseUrl: baseUrl ?? this.baseUrl,
       params: params ?? this.params,
       alerts: alerts ?? this.alerts,
+      devOverrideStatus: clearDevOverride ? null : (devOverrideStatus ?? this.devOverrideStatus),
     );
   }
 }
