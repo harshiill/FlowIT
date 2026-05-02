@@ -28,28 +28,44 @@ class StatusStrip extends StatelessWidget {
       ConnectionStateX.disconnected => 'Disconnected',
     };
 
-    return Wrap(
-      spacing: AppConstants.space8,
-      runSpacing: AppConstants.space8,
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        _StatusChip(label: status.label, color: status.color),
-        _StatusChip(
-          label: tapOn ? 'Tap ON' : 'Tap OFF',
-          color: tapOn ? AppTheme.success : AppTheme.textTertiary,
-          icon: tapOn ? Icons.check_circle_rounded : Icons.radio_button_unchecked,
+        Wrap(
+          spacing: AppConstants.space8,
+          runSpacing: AppConstants.space8,
+          children: [
+            _StatusChip(label: status.label, color: status.color),
+            _StatusChip(
+              label: tapOn ? 'Tap ON' : 'Tap OFF',
+              color: tapOn ? AppTheme.success : AppTheme.textTertiary,
+              icon: tapOn ? Icons.check_circle_rounded : Icons.radio_button_unchecked,
+            ),
+            _StatusChip(
+              label: aligned ? 'Aligned' : 'Misaligned',
+              color: aligned ? AppTheme.success : AppTheme.error,
+              icon: aligned ? Icons.done_all_rounded : Icons.warning_amber_rounded,
+            ),
+          ],
         ),
-        _StatusChip(
-          label: aligned ? 'Aligned' : 'Misaligned',
-          color: aligned ? AppTheme.success : AppTheme.error,
-          icon: aligned ? Icons.done_all_rounded : Icons.warning_amber_rounded,
-        ),
-        _StatusChip(
-          label: connectionLabel,
-          color: _getConnectionColor(connectionState),
-          icon: _getConnectionIcon(connectionState),
-          isAnimating: connectionState == ConnectionStateX.connecting ||
-              connectionState == ConnectionStateX.reconnecting,
-        ),
+        if (connectionState == ConnectionStateX.disconnected) ...[
+          const SizedBox(height: AppConstants.space8),
+          _StatusChip(
+            label: connectionLabel,
+            color: _getConnectionColor(connectionState),
+            icon: _getConnectionIcon(connectionState),
+            isAnimating: false,
+          ),
+        ] else ...[
+          const SizedBox(height: AppConstants.space8),
+          _StatusChip(
+            label: connectionLabel,
+            color: _getConnectionColor(connectionState),
+            icon: _getConnectionIcon(connectionState),
+            isAnimating: connectionState == ConnectionStateX.connecting ||
+                connectionState == ConnectionStateX.reconnecting,
+          ),
+        ],
       ],
     );
   }
@@ -59,7 +75,7 @@ class StatusStrip extends StatelessWidget {
       ConnectionStateX.connected => AppTheme.success,
       ConnectionStateX.connecting => AppTheme.info,
       ConnectionStateX.reconnecting => AppTheme.warning,
-      ConnectionStateX.disconnected => AppTheme.error,
+      ConnectionStateX.disconnected => AppTheme.textTertiary,
     };
   }
 

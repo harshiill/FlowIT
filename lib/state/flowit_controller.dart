@@ -225,6 +225,10 @@ class FlowItController extends StateNotifier<FlowItState> {
     await _performAction(() => _api.startDispense(state.baseUrl));
   }
 
+  Future<void> startVolumeFlow(double targetLiters) async {
+    await _performAction(() => _api.startVolumeDispense(state.baseUrl, targetLiters));
+  }
+
   Future<void> stopFlow() async {
     await _performAction(() => _api.stopDispense(state.baseUrl));
   }

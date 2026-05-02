@@ -34,6 +34,7 @@ class ControlsScreen extends ConsumerWidget {
                 const SizedBox(height: AppConstants.space16),
                 _ControlActionsGrid(
                   executingAction: state.executingAction,
+                  isTapOn: state.latestData?.tapOn ?? false,
                   onCalibrate: controller.calibrateSensor,
                   onReset: controller.resetDevice,
                   onStartFlow: controller.startFlow,
@@ -81,6 +82,15 @@ class ControlsScreen extends ConsumerWidget {
           ),
           const SizedBox(height: AppConstants.space16),
 
+          // Volume Dispense Card
+          FrostedCard(
+            child: _VolumeDispenseEditor(
+              executingAction: state.executingAction,
+              onDispense: controller.startVolumeFlow,
+            ),
+          ),
+          const SizedBox(height: AppConstants.space16),
+
           // Detection Parameters Card
           FrostedCard(
             child: _ParamsEditor(
@@ -100,6 +110,7 @@ class ControlsScreen extends ConsumerWidget {
 class _ControlActionsGrid extends StatelessWidget {
   const _ControlActionsGrid({
     required this.executingAction,
+    required this.isTapOn,
     required this.onCalibrate,
     required this.onReset,
     required this.onStartFlow,
@@ -108,6 +119,7 @@ class _ControlActionsGrid extends StatelessWidget {
   });
 
   final bool executingAction;
+  final bool isTapOn;
   final VoidCallback onCalibrate;
   final VoidCallback onReset;
   final VoidCallback onStartFlow;
@@ -143,16 +155,10 @@ class _ControlActionsGrid extends StatelessWidget {
               type: _ButtonType.primary,
             ),
             _ControlButton(
-              onPressed: executingAction ? null : onStartFlow,
-              icon: Icons.play_arrow,
-              label: 'Start Flow',
-              type: _ButtonType.success,
-            ),
-            _ControlButton(
-              onPressed: executingAction ? null : onStopFlow,
-              icon: Icons.stop,
-              label: 'Stop Flow',
-              type: _ButtonType.danger,
+              onPressed: executingAction ? null : (isTapOn ? onStopFlow : onStartFlow),
+              icon: isTapOn ? Icons.stop : Icons.play_arrow,
+              label: isTapOn ? 'Stop Flow' : 'Start Flow',
+              type: isTapOn ? _ButtonType.danger : _ButtonType.success,
             ),
             _ControlButton(
               onPressed: executingAction ? null : onManualToggle,
@@ -417,7 +423,7 @@ class _ParamsEditorState extends State<_ParamsEditor> {
               ? null
               : (v) => _updateDraft(_draft.copyWith(rimThreshold: v)),
           icon: Icons.radio_button_unchecked,
-          color: AppTheme.accentBlue,
+          color: AppTheme.primaryBlue,
         ),
         const SizedBox(height: AppConstants.space16),
 
@@ -430,7 +436,7 @@ class _ParamsEditorState extends State<_ParamsEditor> {
               ? null
               : (v) => _updateDraft(_draft.copyWith(fullThreshold: v)),
           icon: Icons.check_circle_outline,
-          color: AppTheme.success,
+          color: AppTheme.primaryBlue,
         ),
         const SizedBox(height: AppConstants.space16),
 
@@ -444,7 +450,7 @@ class _ParamsEditorState extends State<_ParamsEditor> {
               ? null
               : (v) => _updateDraft(_draft.copyWith(clusterMinSize: v.round())),
           icon: Icons.grid_on,
-          color: AppTheme.info,
+          color: AppTheme.primaryBlue,
           isInteger: true,
         ),
 
@@ -667,6 +673,173 @@ class _ModernSlider extends StatelessWidget {
             ],
           ),
         ],
+      ),
+    );
+  }
+}
+
+/// Volume Dispense Editor Widget
+class _VolumeDispenseEditor extends StatefulWidget {
+  const _VolumeDispenseEditor({
+    required this.executingAction,
+    required this.onDispense,
+  });
+
+  final bool executingAction;
+  final Future<void> Function(double) onDispense;
+
+  @override
+  State<_VolumeDispenseEditor> createState() => _VolumeDispenseEditorState();
+}
+
+class _VolumeDispenseEditorState extends State<_VolumeDispenseEditor> {
+  final _controller = TextEditingController();
+  double? _selectedPreset;
+
+  @override
+  void dispose() {
+    _controller.dispose();
+    super.dispose();
+  }
+
+  void _selectPreset(double volume) {
+    setState(() {
+      _selectedPreset = volume;
+      _controller.text = volume.toString();
+    });
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final isDisabled = widget.executingAction;
+    final hasValue = _controller.text.isNotEmpty && double.tryParse(_controller.text) != null;
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        const SectionHeader(title: 'Manual Volume Dispense'),
+        const SizedBox(height: AppConstants.space16),
+        
+        // Presets
+        Row(
+          children: [
+            _PresetButton(label: '5L', value: 5.0, selectedValue: _selectedPreset, onSelect: isDisabled ? null : _selectPreset),
+            const SizedBox(width: AppConstants.space12),
+            _PresetButton(label: '10L', value: 10.0, selectedValue: _selectedPreset, onSelect: isDisabled ? null : _selectPreset),
+            const SizedBox(width: AppConstants.space12),
+            _PresetButton(label: '15L', value: 15.0, selectedValue: _selectedPreset, onSelect: isDisabled ? null : _selectPreset),
+          ],
+        ),
+        const SizedBox(height: AppConstants.space16),
+        
+        // Input Field and Button
+        Row(
+          children: [
+            Expanded(
+              child: TextField(
+                controller: _controller,
+                keyboardType: const TextInputType.numberWithOptions(decimal: true),
+                enabled: !isDisabled,
+                onChanged: (val) {
+                  setState(() {
+                     _selectedPreset = double.tryParse(val);
+                  });
+                },
+                decoration: InputDecoration(
+                  labelText: 'Custom Volume',
+                  hintText: 'e.g. 12.5',
+                  suffixText: 'L',
+                  filled: true,
+                  fillColor: AppTheme.surfaceGrey,
+                  border: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(AppConstants.radiusMd),
+                    borderSide: const BorderSide(color: AppTheme.borderLight),
+                  ),
+                  enabledBorder: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(AppConstants.radiusMd),
+                    borderSide: const BorderSide(color: AppTheme.borderLight),
+                  ),
+                  focusedBorder: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(AppConstants.radiusMd),
+                    borderSide: const BorderSide(color: AppTheme.primaryBlue, width: 2),
+                  ),
+                  contentPadding: const EdgeInsets.symmetric(
+                    horizontal: AppConstants.space16,
+                    vertical: AppConstants.space16,
+                  ),
+                ),
+              ),
+            ),
+            const SizedBox(width: AppConstants.space16),
+            FilledButton.icon(
+              onPressed: isDisabled || !hasValue
+                  ? null
+                  : () {
+                      final volume = double.tryParse(_controller.text);
+                      if (volume != null && volume > 0) {
+                        widget.onDispense(volume);
+                        FocusScope.of(context).unfocus();
+                      }
+                    },
+              icon: const Icon(Icons.water_drop),
+              label: const Text('Dispense'),
+              style: FilledButton.styleFrom(
+                padding: const EdgeInsets.symmetric(
+                  horizontal: AppConstants.space24,
+                  vertical: AppConstants.space16,
+                ),
+                backgroundColor: AppTheme.primaryBlue,
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(AppConstants.radiusMd),
+                ),
+              ),
+            ),
+          ],
+        ),
+      ],
+    );
+  }
+}
+
+class _PresetButton extends StatelessWidget {
+  const _PresetButton({
+    required this.label,
+    required this.value,
+    required this.selectedValue,
+    required this.onSelect,
+  });
+
+  final String label;
+  final double value;
+  final double? selectedValue;
+  final ValueChanged<double>? onSelect;
+
+  @override
+  Widget build(BuildContext context) {
+    final isSelected = value == selectedValue;
+    final isDisabled = onSelect == null;
+
+    return Expanded(
+      child: OutlinedButton(
+        onPressed: isDisabled ? null : () => onSelect!(value),
+        style: OutlinedButton.styleFrom(
+          padding: const EdgeInsets.symmetric(vertical: AppConstants.space12),
+          backgroundColor: isSelected ? AppTheme.primaryBlue.withOpacity(0.1) : Colors.transparent,
+          side: BorderSide(
+            color: isSelected ? AppTheme.primaryBlue : AppTheme.borderLight,
+            width: isSelected ? 2 : 1,
+          ),
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(AppConstants.radiusMd),
+          ),
+        ),
+        child: Text(
+          label,
+          style: TextStyle(
+            color: isDisabled ? AppTheme.textTertiary : (isSelected ? AppTheme.primaryBlue : AppTheme.textPrimary),
+            fontWeight: isSelected ? FontWeight.bold : FontWeight.w600,
+          ),
+        ),
       ),
     );
   }

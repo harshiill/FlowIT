@@ -38,6 +38,17 @@ class FlowItApiService {
 
   Future<void> startDispense(String baseUrl) => _postNoBody(baseUrl, '/startDispense');
 
+  Future<void> startVolumeDispense(String baseUrl, double targetLiters) async {
+    final response = await _client.post(
+      Uri.parse('$baseUrl/dispenseVolume'),
+      headers: {'Content-Type': 'application/json'},
+      body: jsonEncode({'targetVolume': targetLiters}),
+    );
+    if (response.statusCode < 200 || response.statusCode >= 300) {
+      throw Exception('Failed to dispense volume: ${response.statusCode}');
+    }
+  }
+
   Future<void> stopDispense(String baseUrl) => _postNoBody(baseUrl, '/stopDispense');
 
   Future<void> _postNoBody(String baseUrl, String path) async {
