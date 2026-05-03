@@ -7,6 +7,7 @@ import '../../core/widgets/frosted_card.dart';
 import '../../core/widgets/section_header.dart';
 import '../../state/flowit_controller.dart';
 import '../../state/flowit_state.dart';
+import '../../data/models/device_data.dart';
 
 class ControlsScreen extends ConsumerWidget {
   const ControlsScreen({super.key});

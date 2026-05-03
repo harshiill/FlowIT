@@ -47,6 +47,20 @@ class AnalyticsScreen extends ConsumerWidget {
                 const SizedBox(height: AppConstants.space16),
                 LayoutBuilder(
                   builder: (context, constraints) {
+                    // Prevent negative width if constraints are tight during layout initialization
+                    double getCardWidth(double maxWidth) {
+                      if (maxWidth <= 0) return 0;
+                      if (maxWidth > 600) {
+                        final w = (maxWidth - AppConstants.space36) / 4;
+                        return w > 0 ? w : 0;
+                      } else {
+                        final w = (maxWidth - AppConstants.space12) / 2;
+                        return w > 0 ? w : 0;
+                      }
+                    }
+
+                    final cardWidth = getCardWidth(constraints.maxWidth);
+
                     // Responsive stat chips layout
                     return Wrap(
                       spacing: AppConstants.space12,
@@ -59,11 +73,7 @@ class AnalyticsScreen extends ConsumerWidget {
                           icon: Icons.water_drop,
                           iconColor: AppTheme.success,
                           iconBackgroundColor: AppTheme.successLight,
-                          width: constraints.maxWidth > 600
-                              ? (constraints.maxWidth - AppConstants.space36) /
-                                    4
-                              : (constraints.maxWidth - AppConstants.space12) /
-                                    2,
+                          width: cardWidth,
                         ),
                         _StatCard(
                           label: 'Avg Session',
@@ -72,11 +82,7 @@ class AnalyticsScreen extends ConsumerWidget {
                           icon: Icons.analytics_outlined,
                           iconColor: AppTheme.info,
                           iconBackgroundColor: AppTheme.infoLight,
-                          width: constraints.maxWidth > 600
-                              ? (constraints.maxWidth - AppConstants.space36) /
-                                    4
-                              : (constraints.maxWidth - AppConstants.space12) /
-                                    2,
+                          width: cardWidth,
                         ),
                         _StatCard(
                           label: 'Total Fills',
@@ -85,11 +91,7 @@ class AnalyticsScreen extends ConsumerWidget {
                           icon: Icons.format_list_numbered_rounded,
                           iconColor: AppTheme.primaryBlue,
                           iconBackgroundColor: AppTheme.accentBluePale,
-                          width: constraints.maxWidth > 600
-                              ? (constraints.maxWidth - AppConstants.space36) /
-                                    4
-                              : (constraints.maxWidth - AppConstants.space12) /
-                                    2,
+                          width: cardWidth,
                         ),
                         _StatCard(
                           label: 'Total Usage',
@@ -98,11 +100,7 @@ class AnalyticsScreen extends ConsumerWidget {
                           icon: Icons.opacity,
                           iconColor: AppTheme.accentBlue,
                           iconBackgroundColor: AppTheme.accentBluePale,
-                          width: constraints.maxWidth > 600
-                              ? (constraints.maxWidth - AppConstants.space36) /
-                                    4
-                              : (constraints.maxWidth - AppConstants.space12) /
-                                    2,
+                          width: cardWidth,
                         ),
                       ],
                     );
