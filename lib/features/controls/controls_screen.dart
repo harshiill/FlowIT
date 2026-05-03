@@ -726,11 +726,11 @@ class _VolumeDispenseEditorState extends State<_VolumeDispenseEditor> {
         // Presets
         Row(
           children: [
-            _PresetButton(label: '5L', value: 5.0, selectedValue: _selectedPreset, onSelect: isDisabled ? null : _selectPreset),
+            _PresetButton(label: '0.25L', value: 0.25, selectedValue: _selectedPreset, onSelect: isDisabled ? null : _selectPreset),
             const SizedBox(width: AppConstants.space12),
-            _PresetButton(label: '10L', value: 10.0, selectedValue: _selectedPreset, onSelect: isDisabled ? null : _selectPreset),
+            _PresetButton(label: '0.5L', value: 0.5, selectedValue: _selectedPreset, onSelect: isDisabled ? null : _selectPreset),
             const SizedBox(width: AppConstants.space12),
-            _PresetButton(label: '15L', value: 15.0, selectedValue: _selectedPreset, onSelect: isDisabled ? null : _selectPreset),
+            _PresetButton(label: '1L', value: 1.0, selectedValue: _selectedPreset, onSelect: isDisabled ? null : _selectPreset),
           ],
         ),
         const SizedBox(height: AppConstants.space16),

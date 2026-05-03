@@ -124,11 +124,14 @@ class MetricTile extends StatelessWidget {
               Row(
                 children: [
                   Flexible(
-                    child: Text(
-                      label,
-                      style: textStyles.label,
-                      maxLines: 1,
-                      overflow: TextOverflow.ellipsis,
+                    child: FittedBox(
+                      fit: BoxFit.scaleDown,
+                      alignment: Alignment.centerLeft,
+                      child: Text(
+                        label,
+                        style: textStyles.label,
+                        maxLines: 1,
+                      ),
                     ),
                   ),
                   if (trend != null && trendValue != null) ...[
@@ -149,11 +152,14 @@ class MetricTile extends StatelessWidget {
                 textBaseline: TextBaseline.alphabetic,
                 children: [
                   Flexible(
-                    child: Text(
-                      value,
-                      style: textStyles.value,
-                      maxLines: 1,
-                      overflow: TextOverflow.ellipsis,
+                    child: FittedBox(
+                      fit: BoxFit.scaleDown,
+                      alignment: Alignment.bottomLeft,
+                      child: Text(
+                        value,
+                        style: textStyles.value,
+                        maxLines: 1,
+                      ),
                     ),
                   ),
                   const SizedBox(width: AppConstants.space4),

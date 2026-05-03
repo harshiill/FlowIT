@@ -232,7 +232,11 @@ class FlowItController extends StateNotifier<FlowItState> {
   }
 
   Future<void> startVolumeFlow(double targetLiters) async {
-    _targetVolumeML = targetLiters * 1000;
+    // Subtract 200mL to account for hardware overshoot as requested by user
+    double adjustedML = (targetLiters * 1000) - 200;
+    if (adjustedML < 0) adjustedML = 0;
+    
+    _targetVolumeML = adjustedML;
     await _performAction(() => _api.startDispense(state.baseUrl));
   }
 
