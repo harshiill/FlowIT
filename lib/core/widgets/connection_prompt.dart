@@ -19,11 +19,13 @@ class ConnectionPrompt extends StatelessWidget {
     required this.connectionState,
     required this.errorMessage,
     required this.onGoToConnection,
+    this.onLongPressLogo,
   });
 
   final ConnectionStateX connectionState;
   final String? errorMessage;
   final VoidCallback onGoToConnection;
+  final VoidCallback? onLongPressLogo;
 
   @override
   Widget build(BuildContext context) {
@@ -42,7 +44,10 @@ class ConnectionPrompt extends StatelessWidget {
           mainAxisAlignment: MainAxisAlignment.center,
           mainAxisSize: MainAxisSize.min,
           children: [
-            _buildLogo(context, isConnecting),
+            GestureDetector(
+              onLongPress: onLongPressLogo,
+              child: _buildLogo(context, isConnecting),
+            ),
             const SizedBox(height: AppConstants.space32),
             _buildContent(context, isConnecting),
           ],

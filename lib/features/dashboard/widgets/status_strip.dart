@@ -11,13 +11,11 @@ class StatusStrip extends StatelessWidget {
     required this.status,
     required this.tapOn,
     required this.connectionState,
-    required this.aligned,
   });
 
   final DeviceStatus status;
   final bool tapOn;
   final ConnectionStateX connectionState;
-  final bool aligned;
 
   @override
   Widget build(BuildContext context) {
@@ -38,13 +36,8 @@ class StatusStrip extends StatelessWidget {
             _StatusChip(label: status.label, color: status.color),
             _StatusChip(
               label: tapOn ? 'Tap ON' : 'Tap OFF',
-              color: tapOn ? AppTheme.success : AppTheme.textTertiary,
-              icon: tapOn ? Icons.check_circle_rounded : Icons.radio_button_unchecked,
-            ),
-            _StatusChip(
-              label: aligned ? 'Aligned' : 'Misaligned',
-              color: aligned ? AppTheme.success : AppTheme.error,
-              icon: aligned ? Icons.done_all_rounded : Icons.warning_amber_rounded,
+              color: tapOn ? AppTheme.primaryBlue : AppTheme.textTertiary,
+              icon: Icons.water_drop_rounded,
             ),
           ],
         ),

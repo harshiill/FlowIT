@@ -27,7 +27,7 @@ class DashboardScreen extends ConsumerWidget {
 
     // Show connection prompt if baseUrl not configured yet
     if (state.baseUrl.isEmpty) {
-      return _buildConnectionPrompt(context, state);
+      return _buildConnectionPrompt(context, ref, state);
     }
 
     // Show loading or error states
@@ -37,7 +37,7 @@ class DashboardScreen extends ConsumerWidget {
         return _buildLoadingState();
       }
 
-      return _buildConnectionPrompt(context, state);
+      return _buildConnectionPrompt(context, ref, state);
     }
 
     final lifetime =
@@ -53,7 +53,7 @@ class DashboardScreen extends ConsumerWidget {
         child: CustomScrollView(
           physics: const AlwaysScrollableScrollPhysics(),
           slivers: [
-            _buildAppBar(context, state),
+            _buildAppBar(context, ref, state),
             SliverPadding(
               padding: const EdgeInsets.fromLTRB(
                 AppConstants.space16,
@@ -63,7 +63,7 @@ class DashboardScreen extends ConsumerWidget {
               ),
               sliver: SliverList(
                 delegate: SliverChildListDelegate.fixed([
-                  _buildSystemStatusCard(data, state),
+                  _buildSystemStatusCard(context, ref, data, state),
                   const SizedBox(height: AppConstants.space16),
                   _buildLiveMetricsCard(data, lifetime),
                   const SizedBox(height: AppConstants.space16),
@@ -81,14 +81,41 @@ class DashboardScreen extends ConsumerWidget {
     );
   }
 
-  /// Build modern app bar with logo and connection status
-  Widget _buildAppBar(BuildContext context, FlowItState state) {
+  Widget _buildAppBar(BuildContext context, WidgetRef ref, FlowItState state) {
+    final isOverridden = state.devOverrideStatus != null;
     return SliverAppBar(
       pinned: true,
       elevation: 0,
       backgroundColor: AppTheme.backgroundWhite,
       surfaceTintColor: AppTheme.backgroundWhite,
-      title: const _SecretDevLogo(),
+      title: GestureDetector(
+        onLongPress: () => _showDevMenu(context, ref),
+        behavior: HitTestBehavior.opaque,
+        child: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            const FlowItLogo(size: 18, style: FlowItLogoStyle.text),
+            if (isOverridden) ...[
+              const SizedBox(width: AppConstants.space8),
+              Container(
+                padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                decoration: BoxDecoration(
+                  color: AppTheme.warning.withOpacity(0.2),
+                  borderRadius: BorderRadius.circular(4),
+                ),
+                child: const Text(
+                  'DEV',
+                  style: TextStyle(
+                    fontSize: 10,
+                    fontWeight: FontWeight.bold,
+                    color: AppTheme.warning,
+                  ),
+                ),
+              ),
+            ],
+          ],
+        ),
+      ),
       actions: [
         Padding(
           padding: const EdgeInsets.only(right: AppConstants.space16),
@@ -131,7 +158,7 @@ class DashboardScreen extends ConsumerWidget {
   }
 
   /// Build system status card
-  Widget _buildSystemStatusCard(DeviceData data, FlowItState state) {
+  Widget _buildSystemStatusCard(BuildContext context, WidgetRef ref, DeviceData data, FlowItState state) {
     return FrostedCard(
       elevation: CardElevation.medium,
       child: Column(
@@ -146,7 +173,6 @@ class DashboardScreen extends ConsumerWidget {
             status: data.status,
             tapOn: data.tapOn,
             connectionState: state.connectionState,
-            aligned: data.aligned,
           ),
         ],
       ),
@@ -165,43 +191,50 @@ class DashboardScreen extends ConsumerWidget {
             size: SectionHeaderSize.medium,
           ),
           const SizedBox(height: AppConstants.space16),
-          GridView.count(
-            crossAxisCount: AppConstants.gridColumns2,
-            childAspectRatio: AppConstants.metricTileAspectRatio,
-            mainAxisSpacing: AppConstants.space12,
-            crossAxisSpacing: AppConstants.space12,
-            physics: const NeverScrollableScrollPhysics(),
-            shrinkWrap: true,
-            children: [
-              MetricTile(
-                label: 'Flow Rate',
-                value: data.flowRate.toStringAsFixed(2),
-                unit: 'L/min',
-                icon: Icons.water_drop_outlined,
-                size: MetricTileSize.medium,
-              ),
-              MetricTile(
-                label: 'Session Usage',
-                value: data.volume.toStringAsFixed(0),
-                unit: 'mL',
-                icon: Icons.local_drink_outlined,
-                size: MetricTileSize.medium,
-              ),
-              MetricTile(
-                label: 'Total Consumed',
-                value: lifetime.toStringAsFixed(2),
-                unit: 'L',
-                icon: Icons.monitor_heart_outlined,
-                size: MetricTileSize.medium,
-              ),
-              MetricTile(
-                label: 'Temperature',
-                value: data.temperature.toStringAsFixed(1),
-                unit: '°C',
-                icon: Icons.thermostat_outlined,
-                size: MetricTileSize.medium,
-              ),
-            ],
+          LayoutBuilder(
+            builder: (context, constraints) {
+              // Adjust aspect ratio based on width to prevent overflow
+              final double aspectRatio = constraints.maxWidth < 350 ? 1.0 : AppConstants.metricTileAspectRatio - 0.2;
+              
+              return GridView.count(
+                crossAxisCount: AppConstants.gridColumns2,
+                childAspectRatio: aspectRatio,
+                mainAxisSpacing: AppConstants.space12,
+                crossAxisSpacing: AppConstants.space12,
+                physics: const NeverScrollableScrollPhysics(),
+                shrinkWrap: true,
+                children: [
+                  MetricTile(
+                    label: 'Flow Rate',
+                    value: data.flowRate.toStringAsFixed(2),
+                    unit: 'L/min',
+                    icon: Icons.water_drop_outlined,
+                    size: MetricTileSize.medium,
+                  ),
+                  MetricTile(
+                    label: 'Session Usage',
+                    value: data.volume.toStringAsFixed(0),
+                    unit: 'mL',
+                    icon: Icons.local_drink_outlined,
+                    size: MetricTileSize.medium,
+                  ),
+                  MetricTile(
+                    label: 'Total Consumed',
+                    value: lifetime.toStringAsFixed(2),
+                    unit: 'L',
+                    icon: Icons.monitor_heart_outlined,
+                    size: MetricTileSize.medium,
+                  ),
+                  MetricTile(
+                    label: 'Center Dist.',
+                    value: data.center.toString(),
+                    unit: 'mm',
+                    icon: Icons.height_outlined,
+                    size: MetricTileSize.medium,
+                  ),
+                ],
+              );
+            },
           ),
         ],
       ),
@@ -215,49 +248,15 @@ class DashboardScreen extends ConsumerWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          SectionHeader(
+          const SectionHeader(
             title: 'Smart Sensor 8×8',
             size: SectionHeaderSize.medium,
-            trailing: Container(
-              padding: const EdgeInsets.symmetric(
-                horizontal: AppConstants.space12,
-                vertical: AppConstants.space8,
-              ),
-              decoration: BoxDecoration(
-                color: AppTheme.surfaceBlue,
-                borderRadius: BorderRadius.circular(AppConstants.radiusFull),
-                border: Border.all(
-                  color: AppTheme.primaryBlue.withOpacity(0.2),
-                  width: 1,
-                ),
-              ),
-              child: Row(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  Icon(
-                    Icons.my_location_rounded,
-                    size: AppConstants.iconXs,
-                    color: AppTheme.primaryBlue,
-                  ),
-                  const SizedBox(width: AppConstants.space4),
-                  Text(
-                    'Centroid (${data.centroidRow}, ${data.centroidCol})',
-                    style: Theme.of(context).textTheme.bodySmall!.copyWith(
-                      color: AppTheme.primaryBlue,
-                      fontWeight: FontWeight.w600,
-                    ),
-                  ),
-                ],
-              ),
-            ),
           ),
           const SizedBox(height: AppConstants.space16),
           HeatmapGrid(
             grid: data.grid,
             cluster: data.cluster,
             rimActive: data.rimActive,
-            centroidRow: data.centroidRow,
-            centroidCol: data.centroidCol,
           ),
         ],
       ),
@@ -355,7 +354,7 @@ class DashboardScreen extends ConsumerWidget {
   }
 
   /// Build connection prompt with modern design
-  Widget _buildConnectionPrompt(BuildContext context, FlowItState state) {
+  Widget _buildConnectionPrompt(BuildContext context, WidgetRef ref, FlowItState state) {
     return ConnectionPrompt(
       connectionState: state.connectionState,
       errorMessage: state.errorMessage,
@@ -364,38 +363,11 @@ class DashboardScreen extends ConsumerWidget {
           MaterialPageRoute<void>(builder: (_) => const ConnectionScreen()),
         );
       },
+      onLongPressLogo: () => _showDevMenu(context, ref),
     );
   }
-}
 
-/// Secret Developer Logo with tap counter
-class _SecretDevLogo extends ConsumerStatefulWidget {
-  const _SecretDevLogo();
-
-  @override
-  ConsumerState<_SecretDevLogo> createState() => _SecretDevLogoState();
-}
-
-class _SecretDevLogoState extends ConsumerState<_SecretDevLogo> {
-  int _taps = 0;
-  DateTime? _lastTap;
-
-  void _handleTap() {
-    final now = DateTime.now();
-    if (_lastTap == null || now.difference(_lastTap!) > const Duration(milliseconds: 500)) {
-      _taps = 1;
-    } else {
-      _taps++;
-    }
-    _lastTap = now;
-
-    if (_taps >= 5) {
-      _taps = 0;
-      _showDevMenu();
-    }
-  }
-
-  void _showDevMenu() {
+  void _showDevMenu(BuildContext context, WidgetRef ref) {
     showModalBottomSheet(
       context: context,
       backgroundColor: AppTheme.backgroundWhite,
@@ -427,23 +399,23 @@ class _SecretDevLogoState extends ConsumerState<_SecretDevLogo> {
                 _buildDevButton(
                   'Force NO CONTAINER',
                   DeviceStatus.noContainer.color,
-                  () => _setOverride(DeviceStatus.noContainer),
+                  () => _setOverride(context, ref, DeviceStatus.noContainer),
                 ),
                 const SizedBox(height: AppConstants.space12),
                 _buildDevButton(
                   'Force FILLING',
                   DeviceStatus.filling.color,
-                  () => _setOverride(DeviceStatus.filling),
+                  () => _setOverride(context, ref, DeviceStatus.filling),
                 ),
                 const SizedBox(height: AppConstants.space12),
                 _buildDevButton(
                   'Force FULL',
                   DeviceStatus.full.color,
-                  () => _setOverride(DeviceStatus.full),
+                  () => _setOverride(context, ref, DeviceStatus.full),
                 ),
                 const SizedBox(height: AppConstants.space24),
                 OutlinedButton(
-                  onPressed: () => _setOverride(null),
+                  onPressed: () => _setOverride(context, ref, null),
                   style: OutlinedButton.styleFrom(
                     padding: const EdgeInsets.symmetric(vertical: AppConstants.space16),
                     side: const BorderSide(color: AppTheme.borderMedium),
@@ -461,7 +433,7 @@ class _SecretDevLogoState extends ConsumerState<_SecretDevLogo> {
     );
   }
 
-  void _setOverride(DeviceStatus? status) {
+  void _setOverride(BuildContext context, WidgetRef ref, DeviceStatus? status) {
     ref.read(flowitControllerProvider.notifier).setDevOverride(status);
     Navigator.of(context).pop();
   }
@@ -477,41 +449,6 @@ class _SecretDevLogoState extends ConsumerState<_SecretDevLogo> {
         ),
       ),
       child: Text(label, style: const TextStyle(fontWeight: FontWeight.bold)),
-    );
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    final state = ref.watch(flowitControllerProvider);
-    final isOverridden = state.devOverrideStatus != null;
-    
-    return GestureDetector(
-      onTap: _handleTap,
-      behavior: HitTestBehavior.opaque,
-      child: Row(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          const FlowItLogo(size: 18, style: FlowItLogoStyle.text),
-          if (isOverridden) ...[
-            const SizedBox(width: AppConstants.space8),
-            Container(
-              padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
-              decoration: BoxDecoration(
-                color: AppTheme.warning.withOpacity(0.2),
-                borderRadius: BorderRadius.circular(4),
-              ),
-              child: const Text(
-                'DEV',
-                style: TextStyle(
-                  fontSize: 10,
-                  fontWeight: FontWeight.bold,
-                  color: AppTheme.warning,
-                ),
-              ),
-            ),
-          ],
-        ],
-      ),
     );
   }
 }

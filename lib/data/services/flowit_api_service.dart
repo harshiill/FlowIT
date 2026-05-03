@@ -20,39 +20,27 @@ class FlowItApiService {
   }
 
   Future<void> setParams(String baseUrl, Map<String, dynamic> payload) async {
-    final response = await _client.post(
-      Uri.parse('$baseUrl/setParam'),
-      headers: {'Content-Type': 'application/json'},
-      body: jsonEncode(payload),
-    );
-    if (response.statusCode < 200 || response.statusCode >= 300) {
-      throw Exception('Failed to set param: ${response.statusCode}');
+    for (final entry in payload.entries) {
+      final url = Uri.parse('$baseUrl/setParam?key=${entry.key}&val=${entry.value}');
+      final response = await _client.get(url);
+      if (response.statusCode < 200 || response.statusCode >= 300) {
+        throw Exception('Failed to set param ${entry.key}: ${response.statusCode}');
+      }
     }
   }
 
-  Future<void> calibrate(String baseUrl) => _postNoBody(baseUrl, '/calibrate');
+  Future<void> calibrate(String baseUrl) => _getNoBody(baseUrl, '/calibrate');
 
-  Future<void> reset(String baseUrl) => _postNoBody(baseUrl, '/reset');
+  Future<void> reset(String baseUrl) => _getNoBody(baseUrl, '/reset');
 
-  Future<void> manualToggle(String baseUrl) => _postNoBody(baseUrl, '/manualToggle');
+  Future<void> manualToggle(String baseUrl) => _getNoBody(baseUrl, '/manualToggle');
 
-  Future<void> startDispense(String baseUrl) => _postNoBody(baseUrl, '/startDispense');
+  Future<void> startDispense(String baseUrl) => _getNoBody(baseUrl, '/startDispense');
 
-  Future<void> startVolumeDispense(String baseUrl, double targetLiters) async {
-    final response = await _client.post(
-      Uri.parse('$baseUrl/dispenseVolume'),
-      headers: {'Content-Type': 'application/json'},
-      body: jsonEncode({'targetVolume': targetLiters}),
-    );
-    if (response.statusCode < 200 || response.statusCode >= 300) {
-      throw Exception('Failed to dispense volume: ${response.statusCode}');
-    }
-  }
+  Future<void> stopDispense(String baseUrl) => _getNoBody(baseUrl, '/stopDispense');
 
-  Future<void> stopDispense(String baseUrl) => _postNoBody(baseUrl, '/stopDispense');
-
-  Future<void> _postNoBody(String baseUrl, String path) async {
-    final response = await _client.post(Uri.parse('$baseUrl$path'));
+  Future<void> _getNoBody(String baseUrl, String path) async {
+    final response = await _client.get(Uri.parse('$baseUrl$path'));
     if (response.statusCode < 200 || response.statusCode >= 300) {
       throw Exception('Action failed at $path: ${response.statusCode}');
     }

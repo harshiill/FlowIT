@@ -141,15 +141,6 @@ class AnalyticsScreen extends ConsumerWidget {
                       title: 'Flow Rate History',
                       height: chartHeight,
                     ),
-                    const SizedBox(height: AppConstants.space20),
-                    Divider(height: 1, color: AppTheme.borderLight),
-                    const SizedBox(height: AppConstants.space20),
-                    MiniLineChart(
-                      points: state.temperaturePoints,
-                      color: AppTheme.error,
-                      title: 'Temperature Trend',
-                      height: chartHeight,
-                    ),
                   ],
                 );
               },
@@ -320,8 +311,6 @@ class _SessionLogTile extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
-    final isAligned = entry.aligned;
-
     return ListTile(
       contentPadding: const EdgeInsets.symmetric(
         horizontal: 0,
@@ -331,12 +320,12 @@ class _SessionLogTile extends StatelessWidget {
         width: AppConstants.iconLg,
         height: AppConstants.iconLg,
         decoration: BoxDecoration(
-          color: isAligned ? AppTheme.successLight : AppTheme.errorLight,
+          color: AppTheme.successLight,
           borderRadius: BorderRadius.circular(AppConstants.radiusSm),
         ),
         child: Icon(
-          isAligned ? Icons.task_alt : Icons.warning_amber_rounded,
-          color: isAligned ? AppTheme.success : AppTheme.error,
+          Icons.task_alt,
+          color: AppTheme.success,
           size: AppConstants.iconSm,
         ),
       ),

@@ -34,7 +34,9 @@ class ControlsScreen extends ConsumerWidget {
                 const SizedBox(height: AppConstants.space16),
                 _ControlActionsGrid(
                   executingAction: state.executingAction,
-                  isTapOn: state.latestData?.tapOn ?? false,
+                  isTapOn: state.latestData?.status == DeviceStatus.manualOverride ||
+                           state.latestData?.status == DeviceStatus.filling ||
+                           (state.latestData?.tapOn ?? false),
                   onCalibrate: controller.calibrateSensor,
                   onReset: controller.resetDevice,
                   onStartFlow: controller.startFlow,

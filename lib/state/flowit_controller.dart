@@ -36,8 +36,7 @@ class FlowItController extends StateNotifier<FlowItState> {
 
   DateTime? _activeSessionStart;
   final List<double> _activeSessionFlows = [];
-  final List<double> _activeSessionTemps = [];
-  bool _activeSessionAligned = true;
+  double? _targetVolumeML;
 
   Future<void> _bootstrap() async {
     final baseUrl = await _historyStorage.loadBaseUrl();
@@ -79,7 +78,12 @@ class FlowItController extends StateNotifier<FlowItState> {
 
       final flow = _appendPoint(state.flowPoints, MetricPoint(data.updatedAt, data.flowRate));
       final usage = _appendPoint(state.usagePoints, MetricPoint(data.updatedAt, _normalizeVolumeLiters(data.volume)));
-      final temps = _appendPoint(state.temperaturePoints, MetricPoint(data.updatedAt, data.temperature));
+      final temps = _appendPoint(state.temperaturePoints, MetricPoint(data.updatedAt, 0.0)); // Deprecated
+
+      if (_targetVolumeML != null && data.volume >= _targetVolumeML!) {
+        _targetVolumeML = null;
+        unawaited(stopFlow());
+      }
 
       state = state.copyWith(
         loading: false,
@@ -116,14 +120,10 @@ class FlowItController extends StateNotifier<FlowItState> {
     if (data.status == DeviceStatus.filling && _activeSessionStart == null) {
       _activeSessionStart = DateTime.now();
       _activeSessionFlows.clear();
-      _activeSessionTemps.clear();
-      _activeSessionAligned = data.aligned;
     }
 
     if (_activeSessionStart != null) {
       _activeSessionFlows.add(data.flowRate);
-      _activeSessionTemps.add(data.temperature);
-      _activeSessionAligned = _activeSessionAligned && data.aligned;
     }
 
     final hasSessionEnded =
@@ -134,17 +134,13 @@ class FlowItController extends StateNotifier<FlowItState> {
       final avgFlow = _activeSessionFlows.isEmpty
           ? 0.0
           : _activeSessionFlows.reduce((a, b) => a + b) / _activeSessionFlows.length;
-      final avgTemp = _activeSessionTemps.isEmpty
-          ? 0.0
-          : _activeSessionTemps.reduce((a, b) => a + b) / _activeSessionTemps.length;
 
       final entry = SessionEntry(
         startedAt: _activeSessionStart!,
         endedAt: now,
         volumeLiters: _normalizeVolumeLiters(data.volume),
         avgFlowRate: avgFlow,
-        avgTemperature: avgTemp,
-        aligned: _activeSessionAligned,
+        avgTemperature: 0.0,
       );
 
       final history = [...state.history, entry];
@@ -153,8 +149,6 @@ class FlowItController extends StateNotifier<FlowItState> {
 
       _activeSessionStart = null;
       _activeSessionFlows.clear();
-      _activeSessionTemps.clear();
-      _activeSessionAligned = true;
     }
   }
 
@@ -168,8 +162,14 @@ class FlowItController extends StateNotifier<FlowItState> {
     if (_lastStatus == data.status) return;
 
     switch (data.status) {
-      case DeviceStatus.alignBucket:
-        _addAlert('Bucket misaligned. Align container to continue.', AlertType.warning);
+      case DeviceStatus.booting:
+        _addAlert('Device is booting...', AlertType.info);
+        return;
+      case DeviceStatus.calibrating:
+        _addAlert('Sensor calibration in progress.', AlertType.info);
+        return;
+      case DeviceStatus.errorBlocked:
+        _addAlert('Sensor blocked! Ensure nothing is covering the VL53L5CX.', AlertType.warning);
         return;
       case DeviceStatus.full:
         _addAlert('Container full. Dispense cycle completed.', AlertType.success);
@@ -183,7 +183,7 @@ class FlowItController extends StateNotifier<FlowItState> {
       case DeviceStatus.filling:
         _addAlert('Dispensing started.', AlertType.info);
         return;
-      case DeviceStatus.manualMode:
+      case DeviceStatus.manualOverride:
         _addAlert('Manual mode enabled.', AlertType.info);
         return;
       case DeviceStatus.unknown:
@@ -232,7 +232,8 @@ class FlowItController extends StateNotifier<FlowItState> {
   }
 
   Future<void> startVolumeFlow(double targetLiters) async {
-    await _performAction(() => _api.startVolumeDispense(state.baseUrl, targetLiters));
+    _targetVolumeML = targetLiters * 1000;
+    await _performAction(() => _api.startDispense(state.baseUrl));
   }
 
   Future<void> stopFlow() async {

@@ -5,7 +5,6 @@ class SessionEntry {
     required this.volumeLiters,
     required this.avgFlowRate,
     required this.avgTemperature,
-    required this.aligned,
   });
 
   final DateTime startedAt;
@@ -13,7 +12,6 @@ class SessionEntry {
   final double volumeLiters;
   final double avgFlowRate;
   final double avgTemperature;
-  final bool aligned;
 
   Duration get duration => endedAt.difference(startedAt);
 
@@ -24,7 +22,6 @@ class SessionEntry {
       'volumeLiters': volumeLiters,
       'avgFlowRate': avgFlowRate,
       'avgTemperature': avgTemperature,
-      'aligned': aligned,
     };
   }
 
@@ -35,7 +32,6 @@ class SessionEntry {
       volumeLiters: (json['volumeLiters'] as num?)?.toDouble() ?? 0,
       avgFlowRate: (json['avgFlowRate'] as num?)?.toDouble() ?? 0,
       avgTemperature: (json['avgTemperature'] as num?)?.toDouble() ?? 0,
-      aligned: (json['aligned'] as bool?) ?? false,
     );
   }
 }

@@ -9,21 +9,17 @@ class HeatmapGrid extends StatelessWidget {
     required this.grid,
     required this.cluster,
     required this.rimActive,
-    required this.centroidRow,
-    required this.centroidCol,
   });
 
-  final List<double> grid;
-  final List<bool> cluster;
-  final List<bool> rimActive;
-  final int centroidRow;
-  final int centroidCol;
+  final List<int> grid;
+  final List<int> cluster;
+  final List<int> rimActive;
 
   @override
   Widget build(BuildContext context) {
     final clipped = grid.take(AppConstants.heatmapTotalCells).toList(growable: false);
-    final minValue = clipped.isEmpty ? 0.0 : clipped.reduce((a, b) => a < b ? a : b);
-    final maxValue = clipped.isEmpty ? 1.0 : clipped.reduce((a, b) => a > b ? a : b);
+    final minValue = clipped.isEmpty ? 0 : clipped.reduce((a, b) => a < b ? a : b);
+    final maxValue = clipped.isEmpty ? 1 : clipped.reduce((a, b) => a > b ? a : b);
 
     return RepaintBoundary(
       child: GridView.builder(
@@ -36,20 +32,17 @@ class HeatmapGrid extends StatelessWidget {
           crossAxisSpacing: AppConstants.space4,
         ),
         itemBuilder: (context, index) {
-          final value = index < clipped.length ? clipped[index] : 0.0;
-          final normalized = maxValue - minValue < 0.0001
+          final value = index < clipped.length ? clipped[index] : 0;
+          final normalized = maxValue - minValue == 0
               ? 0.0
               : (value - minValue) / (maxValue - minValue);
 
-          final row = index ~/ AppConstants.heatmapGridSize;
-          final col = index % AppConstants.heatmapGridSize;
-          final isCentroid = row == centroidRow && col == centroidCol;
-          final isCluster = index < cluster.length && cluster[index];
-          final isRim = index < rimActive.length && rimActive[index];
+          final isCluster = index < cluster.length && cluster[index] == 1;
+          final isRim = index < rimActive.length && rimActive[index] == 1;
 
           return _HeatmapCell(
-            value: normalized,
-            isCentroid: isCentroid,
+            normalizedValue: normalized,
+            rawValue: value,
             isCluster: isCluster,
             isRim: isRim,
           );
@@ -61,14 +54,14 @@ class HeatmapGrid extends StatelessWidget {
 
 class _HeatmapCell extends StatefulWidget {
   const _HeatmapCell({
-    required this.value,
-    required this.isCentroid,
+    required this.normalizedValue,
+    required this.rawValue,
     required this.isCluster,
     required this.isRim,
   });
 
-  final double value;
-  final bool isCentroid;
+  final double normalizedValue;
+  final int rawValue;
   final bool isCluster;
   final bool isRim;
 
@@ -76,47 +69,8 @@ class _HeatmapCell extends StatefulWidget {
   State<_HeatmapCell> createState() => _HeatmapCellState();
 }
 
-class _HeatmapCellState extends State<_HeatmapCell> with SingleTickerProviderStateMixin {
-  late AnimationController _pulseController;
-  late Animation<double> _pulseAnimation;
+class _HeatmapCellState extends State<_HeatmapCell> {
   bool _isHovered = false;
-
-  @override
-  void initState() {
-    super.initState();
-    _pulseController = AnimationController(
-      duration: AppConstants.durationVerySlow * 2,
-      vsync: this,
-    );
-
-    _pulseAnimation = Tween<double>(begin: 1.0, end: 1.15).animate(
-      CurvedAnimation(
-        parent: _pulseController,
-        curve: Curves.easeInOut,
-      ),
-    );
-
-    if (widget.isCentroid) {
-      _pulseController.repeat(reverse: true);
-    }
-  }
-
-  @override
-  void didUpdateWidget(_HeatmapCell oldWidget) {
-    super.didUpdateWidget(oldWidget);
-    if (widget.isCentroid && !oldWidget.isCentroid) {
-      _pulseController.repeat(reverse: true);
-    } else if (!widget.isCentroid && oldWidget.isCentroid) {
-      _pulseController.stop();
-      _pulseController.reset();
-    }
-  }
-
-  @override
-  void dispose() {
-    _pulseController.dispose();
-    super.dispose();
-  }
 
   Color _getHeatmapColor(double normalizedValue) {
     // Gradient from error (cold/low) to primary blue (hot/high)
@@ -128,21 +82,19 @@ class _HeatmapCellState extends State<_HeatmapCell> with SingleTickerProviderSta
   }
 
   Color _getBorderColor() {
-    if (widget.isCentroid) return AppTheme.backgroundWhite;
     if (widget.isCluster) return AppTheme.success;
     if (widget.isRim) return AppTheme.warning;
     return Colors.transparent;
   }
 
   double _getBorderWidth() {
-    if (widget.isCentroid) return 2.5;
     if (widget.isCluster || widget.isRim) return 1.8;
     return 0;
   }
 
   @override
   Widget build(BuildContext context) {
-    final cellColor = _getHeatmapColor(widget.value);
+    final cellColor = _getHeatmapColor(widget.normalizedValue);
     final borderColor = _getBorderColor();
     final borderWidth = _getBorderWidth();
 
@@ -159,53 +111,35 @@ class _HeatmapCellState extends State<_HeatmapCell> with SingleTickerProviderSta
             color: borderColor,
             width: borderWidth,
           ),
-          boxShadow: _isHovered || widget.isCentroid
+          boxShadow: _isHovered
               ? [
                   BoxShadow(
                     color: cellColor.withOpacity(0.5),
-                    blurRadius: _isHovered ? 8 : 4,
+                    blurRadius: 8,
                     offset: const Offset(0, 2),
                   ),
                 ]
               : null,
         ),
-        child: widget.isCentroid
-            ? ScaleTransition(
-                scale: _pulseAnimation,
-                child: Center(
-                  child: Container(
-                    padding: EdgeInsets.all(AppConstants.space4),
-                    decoration: BoxDecoration(
-                      color: AppTheme.backgroundWhite.withOpacity(0.9),
-                      shape: BoxShape.circle,
-                    ),
-                    child: Icon(
-                      Icons.my_location_rounded,
-                      size: 10,
-                      color: AppTheme.primaryBlue,
+        child: _isHovered
+            ? Center(
+                child: Container(
+                  padding: EdgeInsets.all(2),
+                  decoration: BoxDecoration(
+                    color: AppTheme.backgroundWhite.withOpacity(0.8),
+                    borderRadius: BorderRadius.circular(AppConstants.radiusXs),
+                  ),
+                  child: Text(
+                    widget.rawValue.toString(),
+                    style: TextStyle(
+                      fontSize: 7,
+                      fontWeight: FontWeight.w700,
+                      color: AppTheme.textPrimary,
                     ),
                   ),
                 ),
               )
-            : _isHovered
-                ? Center(
-                    child: Container(
-                      padding: EdgeInsets.all(2),
-                      decoration: BoxDecoration(
-                        color: AppTheme.backgroundWhite.withOpacity(0.8),
-                        borderRadius: BorderRadius.circular(AppConstants.radiusXs),
-                      ),
-                      child: Text(
-                        widget.value.toStringAsFixed(2),
-                        style: TextStyle(
-                          fontSize: 7,
-                          fontWeight: FontWeight.w700,
-                          color: AppTheme.textPrimary,
-                        ),
-                      ),
-                    ),
-                  )
-                : null,
+            : null,
       ),
     );
   }
