@@ -137,15 +137,21 @@ class DeviceData {
       final normalized = raw.trim().toUpperCase().replaceAll(' ', '_');
       switch (normalized) {
         case 'BOOTING...':
+        case 'BOOTING':
           return DeviceStatus.booting;
         case 'CALIBRATING...':
+        case 'CALIBRATING':
           return DeviceStatus.calibrating;
         case 'ERROR:_SENSOR_BLOCKED':
+        case 'SENSOR_BLOCKED':
           return DeviceStatus.errorBlocked;
+        case 'ERROR:_NO_CONTAINER':
         case 'NO_CONTAINER':
           return DeviceStatus.noContainer;
+        case 'FILLING...':
         case 'FILLING':
           return DeviceStatus.filling;
+        case 'CONTAINER_FULL':
         case 'FULL':
           return DeviceStatus.full;
         case 'HAND_DETECTED':
