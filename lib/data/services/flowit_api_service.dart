@@ -39,6 +39,8 @@ class FlowItApiService {
 
   Future<void> stopDispense(String baseUrl) => _getNoBody(baseUrl, '/stopDispense');
 
+  Future<void> setDevOverride(String baseUrl, String statusStr) => _getNoBody(baseUrl, '/devOverride?status=$statusStr');
+
   Future<void> _getNoBody(String baseUrl, String path) async {
     final response = await _client.get(Uri.parse('$baseUrl$path'));
     if (response.statusCode < 200 || response.statusCode >= 300) {

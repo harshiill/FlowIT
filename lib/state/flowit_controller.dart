@@ -246,13 +246,15 @@ class FlowItController extends StateNotifier<FlowItState> {
 
   Future<void> setDevOverride(DeviceStatus? status) async {
     state = state.copyWith(devOverrideStatus: status, clearDevOverride: status == null);
-    if (status == DeviceStatus.filling) {
-      await startFlow();
-    } else if (status == DeviceStatus.noContainer || status == DeviceStatus.full) {
-      await stopFlow();
-    } else {
-      unawaited(_pollOnce());
-    }
+    
+    // Map local enum back to ESP string
+    String statusStr = 'CLEAR';
+    if (status == DeviceStatus.filling) statusStr = 'FILLING';
+    else if (status == DeviceStatus.noContainer) statusStr = 'NO_CONTAINER';
+    else if (status == DeviceStatus.full) statusStr = 'FULL';
+
+    // Tell the ESP to force this state globally across all devices
+    await _performAction(() => _api.setDevOverride(state.baseUrl, statusStr));
   }
 
   Future<void> _performAction(Future<void> Function() action) async {
